@@ -86,16 +86,33 @@
   .topo .container{display:flex;align-items:center;justify-content:space-between;height:68px}
   .logo{text-decoration:none;font-weight:800;font-size:1.2rem;color:var(--cafe-escuro);display:flex;align-items:baseline;gap:.35em}
   .logo .mao{color:var(--vermelho-escuro);font-size:1.45rem}
+  .logo{white-space:nowrap}
+  @media (max-width: 380px){ .logo{font-size:1.02rem} .logo .mao{display:none} .idioma button{min-width:36px;padding:0 8px} .topo-direita{gap:8px} }
   .menu ul{list-style:none;margin:0;padding:0;display:flex;gap:4px}
   .menu a{display:block;padding:.5em .8em;border-radius:999px;text-decoration:none;font-weight:600;font-size:.95rem;color:var(--cafe)}
   .menu a:hover{background:var(--creme-escuro)}
+  .topo-direita{display:flex;align-items:center;gap:10px}
+  /* Botão de idioma PT | EN */
+  .idioma{display:inline-flex;padding:3px;border:2px dashed var(--tracejado);border-radius:999px;background:var(--papel)}
+  .idioma button{min-width:42px;min-height:36px;padding:0 10px;border:0;border-radius:999px;background:transparent;font:700 .85rem var(--corpo);letter-spacing:.05em;color:var(--cafe);cursor:pointer;transition:background-color .2s, color .2s}
+  .idioma button:hover{background:var(--creme-escuro)}
+  .idioma button[aria-pressed="true"]{background:var(--cafe);color:#fff}
+  /* Botão "Trabalhe comigo" no topo, como na referência */
+  .botao-topo{display:inline-flex;align-items:center;min-height:44px;padding:0 18px;border-radius:12px;background:var(--cafe-escuro);color:#fff;font-weight:700;font-size:.95rem;text-decoration:none;white-space:nowrap;transition:background-color .2s}
+  .botao-topo:hover{background:var(--cafe)}
+  .menu .so-celular{display:none}
+  @media (max-width: 560px){
+    .botao-topo{display:none}
+    .menu .so-celular{display:block}
+    .menu .so-celular a{margin-top:8px;background:var(--cafe-escuro);color:#fff;text-align:center;border-radius:12px}
+  }
   .menu-botao{display:none;width:48px;height:48px;border-radius:12px;border:2px dashed var(--tracejado);background:var(--papel);cursor:pointer;position:relative}
   .menu-botao span{position:absolute;left:12px;right:12px;height:2.5px;background:var(--cafe);border-radius:2px;transition:transform .25s, opacity .2s}
   .menu-botao span:nth-child(1){top:15px}.menu-botao span:nth-child(2){top:22px}.menu-botao span:nth-child(3){top:29px}
   .menu-botao[aria-expanded="true"] span:nth-child(1){transform:translateY(7px) rotate(45deg)}
   .menu-botao[aria-expanded="true"] span:nth-child(2){opacity:0}
   .menu-botao[aria-expanded="true"] span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
-  @media (max-width: 860px){
+  @media (max-width: 1120px){
     .menu-botao{display:block}
     .menu{position:absolute;top:68px;left:0;right:0;background:var(--papel);border-bottom:2px dashed var(--tracejado);display:none;padding:10px 20px 20px}
     .menu.aberto{display:block}
@@ -104,7 +121,10 @@
   }
 
   /* ================= CAPA ================= */
-  .capa{padding:108px 0 40px}
+  .capa{padding:108px 0 40px;background-color:var(--creme);
+    /* Quadriculado da capa: linhas finas a cada 44px */
+    background-image:linear-gradient(to right,rgba(107,74,53,.08) 1px,transparent 1px),linear-gradient(rgba(107,74,53,.08) 1px,transparent 1px);
+    background-size:44px 44px}
   .capa-grade{display:grid;grid-template-columns:1.15fr .85fr;gap:48px;align-items:center}
   .capa-oi{font-family:var(--mao);font-size:1.9rem;color:var(--vermelho-escuro);margin:0 0 .1em;transform:rotate(-2deg);display:inline-block}
   .capa h1{font-size:clamp(3rem, 10vw, 6.2rem);font-weight:800;letter-spacing:-.04em;line-height:.95}
@@ -117,15 +137,8 @@
   .capa-numeros strong{display:block;font-size:clamp(1.6rem, 4vw, 2.2rem);font-weight:800;color:var(--cafe);line-height:1.1}
   .capa-numeros span{font-size:.9rem;color:var(--tinta-suave)}
   .capa-foto-wrap{position:relative;padding:14px}
-  .capa-foto-wrap .cartao{padding:14px;transform:rotate(2deg)}
-  .capa-foto-wrap .legenda-mao{position:absolute;left:0;bottom:-16px;font-family:var(--mao);font-size:1.5rem;color:var(--verde-escuro);transform:rotate(-4deg)}
-  .selo{
-    position:absolute;top:-8px;right:-4px;z-index:2;width:112px;height:112px;border-radius:50%;
-    background:var(--vermelho);color:#fff;display:grid;place-items:center;text-align:center;
-    font-family:var(--mao);font-size:2rem;line-height:.9;transform:rotate(-16deg);
-    outline:2px dashed rgba(255,255,255,.75);outline-offset:-9px;box-shadow:0 8px 18px -8px rgba(120,40,25,.6);
-  }
-  .selo small{display:block;font-size:1.15rem}
+  .capa-foto-wrap .cartao{padding:0;background:none;border:0;box-shadow:0 18px 40px -24px rgba(74,50,36,.55);border-radius:14px;transform:rotate(2deg)}
+  .capa-foto-wrap .legenda-mao{position:absolute;left:0;bottom:-16px;font-family:var(--mao);font-size:1.5rem;color:#ad3c68;transform:rotate(-4deg)}
 
   /* Blocos de imagem provisórios (degradê + legenda de formato) */
   .midia{
@@ -137,22 +150,31 @@
     color:var(--cafe-escuro);font-size:.8rem;font-weight:600;padding:4px 10px;border-radius:999px;
   }
   .midia img,.midia video{width:100%;height:100%;object-fit:cover}
+  .midia.com-foto::after{display:none}
+  .midia.com-foto{background:none}
+  .capa-foto-wrap .com-foto img{opacity:.97}
   .r-4x5{aspect-ratio:4/5}
   .r-9x16{aspect-ratio:9/16}
 
-  /* Faixa de carimbos (marcas) */
-  .faixa{margin-top:56px;padding:18px 20px;border-top:2px dashed var(--tracejado);border-bottom:2px dashed var(--tracejado);background:rgba(255,253,249,.6)}
-  .faixa-titulo{text-align:center;font-family:var(--mao);font-size:1.5rem;color:var(--cafe);margin:0 0 10px}
-  .carimbos{list-style:none;margin:0 auto;padding:0;max-width:var(--largura);display:grid;grid-template-columns:repeat(12,1fr);gap:10px;justify-items:center}
-  .carimbo{
-    width:78px;height:78px;border-radius:50%;border:2px dashed currentColor;display:grid;place-items:center;
-    text-align:center;font-weight:800;font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;line-height:1.1;
-    padding:6px;transform:rotate(var(--giro,0deg));background:var(--papel);
-    box-shadow:inset 0 0 0 4px var(--papel), inset 0 0 0 5px currentColor;
+  /* Faixa de marcas: esteira de logos que anda da direita para a esquerda */
+  .faixa{margin-top:56px;padding:20px 0 24px;border-top:2px dashed var(--tracejado);border-bottom:2px dashed var(--tracejado);background:rgba(255,253,249,.6)}
+  .faixa-titulo{text-align:center;font-family:var(--mao);font-size:1.6rem;color:var(--cafe);margin:0 20px 14px}
+  .esteira{overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
+  .esteira-trilho{display:flex;width:max-content;list-style:none;margin:0;padding:6px 0;animation:esteira 35s linear infinite}
+  .esteira:hover .esteira-trilho{animation-play-state:paused}
+  .esteira-trilho li{flex:none;margin-right:22px;width:120px;height:120px;border-radius:50%;padding:8px;background:var(--papel);border:2px solid rgba(107,74,53,.16);box-shadow:0 8px 20px -14px rgba(74,50,36,.5)}
+  /* As logos ficam todas numa imagem só (marcas.jpg), uma ao lado da outra.
+     Ao adicionar logos, troque o número depois de ?v= para o navegador buscar a imagem nova */
+  .logo-marca{display:block;width:100%;height:100%;border-radius:50%;background:url("marcas.jpg?v=28") 0 0 / auto 100% no-repeat}
+  @keyframes esteira{to{transform:translateX(-50%)}}
+  @media (max-width: 520px){ .esteira-trilho li{width:96px;height:96px;padding:6px;margin-right:16px} }
+  @media (prefers-reduced-motion: reduce){
+    .esteira{-webkit-mask-image:none;mask-image:none}
+    .esteira-trilho{width:auto;flex-wrap:wrap;justify-content:center;gap:14px;padding:4px 20px}
+    .esteira-trilho li{margin:0}
+    .esteira-trilho li[aria-hidden="true"]{display:none}
   }
-  .carimbo.c0{color:var(--cafe)}.carimbo.c1{color:var(--verde-escuro)}.carimbo.c2{color:var(--vermelho-escuro)}
-  @media (max-width: 1000px){ .carimbos{grid-template-columns:repeat(6,1fr);row-gap:14px} }
-  @media (max-width: 520px){ .carimbos{grid-template-columns:repeat(4,1fr)} .carimbo{width:68px;height:68px;font-size:.64rem} }
+
 
   @media (max-width: 860px){
     .capa{padding-top:96px}
@@ -162,7 +184,6 @@
   @media (max-width: 420px){
     .capa-numeros span{font-size:.8rem}
     .capa-botoes .botao{flex:1 1 100%}
-    .selo{width:96px;height:96px;font-size:1.7rem}
   }
 
   /* ================= SEÇÕES ================= */
@@ -179,12 +200,6 @@
   .sobre-foto{padding:14px;transform:rotate(-2deg)}
   .sobre-texto{padding:36px}
   .sobre-texto p{font-size:1.1rem}
-  .promessas{list-style:none;padding:0;margin:24px 0}
-  .promessas li{display:flex;gap:14px;align-items:center;padding:12px 0;border-bottom:2px dashed rgba(107,74,53,.2);font-weight:600;color:var(--cafe-escuro)}
-  .promessas li:last-child{border-bottom:0}
-  .check{flex:none;width:40px;height:40px;border-radius:50%;border:2px dashed var(--verde);color:var(--verde);display:grid;place-items:center;transform:rotate(-8deg)}
-  .check svg{width:20px;height:20px}
-  .assinatura{font-family:var(--mao);font-size:2.6rem;color:var(--cafe);transform:rotate(-3deg);display:inline-block;margin:6px 0 0}
   @media (max-width: 860px){
     .sobre-grade{grid-template-columns:1fr;gap:32px}
     .sobre-foto{max-width:340px;margin:0 auto;width:100%}
@@ -205,6 +220,19 @@
   }
   .play svg{width:28px;height:28px;margin-left:5px;fill:var(--vermelho-escuro)}
   .video-card:hover .play{transform:scale(1.08)}
+  /* Vídeos do YouTube: capa, prévia sem som ao passar o mouse e janela com o vídeo completo */
+  .midia .capa-yt,.midia .previa-yt{position:absolute;inset:0;width:100%;height:100%;border:0}
+  .midia .capa-yt{object-fit:cover}
+  .midia .previa-yt{pointer-events:none;opacity:0;transition:opacity .4s}
+  .midia .previa-yt.pronta{opacity:1}
+  .midia.com-video::after{display:none}
+  .midia .play{z-index:2}
+  .video-card.tocando .play{opacity:0;transform:scale(.8)}
+  .video-modal{position:fixed;inset:0;z-index:320;background:rgba(20,14,10,.85);display:grid;place-items:center;padding:20px}
+  .video-modal[hidden]{display:none}
+  .video-modal-caixa{position:relative;height:min(86vh,calc((100vw - 40px) * 16 / 9));aspect-ratio:9/16;border-radius:18px;overflow:hidden;background:#000;box-shadow:0 30px 60px -20px rgba(0,0,0,.7)}
+  .video-modal-caixa iframe{width:100%;height:100%;border:0;display:block}
+  .video-modal .modal-fechar{z-index:2;top:10px;right:10px;background:rgba(255,253,249,.92)}
   .video-info{padding:18px 8px 0}
   .video-numero{font-size:2.5rem;font-weight:800;color:var(--vermelho-escuro);line-height:1;letter-spacing:-.03em}
   .video-rotulo{font-family:var(--mao);font-size:1.4rem;color:var(--verde-escuro);display:block;margin-bottom:10px}
@@ -225,6 +253,19 @@
   .galeria{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:22px}
   .trabalho{padding:10px 10px 16px;animation:surgir .35s ease both}
   .trabalho[hidden]{display:none}
+  /* Trabalho em vídeo na galeria: mesmo card, com capa, prévia e vídeo que abre no site */
+  .trabalho .video-galeria{display:block;padding:0;text-decoration:none;color:inherit}
+  .trabalho .video-galeria:hover{transform:none;box-shadow:none}
+  .trabalho .video-galeria .midia{margin-bottom:14px}
+  @media (max-width: 560px){
+    .galeria{grid-template-columns:repeat(2,1fr);gap:12px}
+    .trabalho{padding:6px 6px 12px}
+    .trabalho h3{font-size:.95rem;margin:0 4px 2px}
+    .trabalho p{font-size:.8rem;margin:0 4px}
+    .trabalho .etiqueta{font-size:.65rem;margin-left:4px;padding:1px 8px}
+    .trabalho .play{width:52px;height:52px}
+    .trabalho .play svg{width:20px;height:20px}
+  }
   .trabalho .midia{margin-bottom:14px}
   .etiqueta{display:inline-block;font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--verde-escuro);border:1.5px dashed var(--verde);border-radius:999px;padding:2px 10px;margin-bottom:8px}
   .trabalho h3{font-size:1.08rem;margin:0 6px 4px}
@@ -251,12 +292,27 @@
   .metrica{padding:28px 20px;text-align:center}
   .metrica strong{display:block;font-size:clamp(2.4rem, 5vw, 3.2rem);font-weight:800;color:var(--cafe);line-height:1;letter-spacing:-.03em}
   .metrica span{display:block;margin-top:8px;color:var(--tinta-suave);font-weight:500}
-  .resultados{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
-  .resultado{padding:26px 24px}
-  .resultado strong{display:block;font-size:2.3rem;font-weight:800;color:var(--verde-escuro);line-height:1}
-  .resultado .rotulo{font-family:var(--mao);font-size:1.35rem;color:var(--cafe);display:block;margin:4px 0 10px}
-  .resultado p{margin:0;color:var(--tinta-suave);font-size:.96rem}
-  .resultado .marca{display:block;margin-top:12px;font-weight:700;font-size:.85rem;text-transform:uppercase;letter-spacing:.06em;color:var(--vermelho-escuro)}
+  /* Case de sucesso: texto e números de um lado, print dos resultados do outro */
+  .cases{list-style:none;margin:0;padding:0;display:grid;gap:24px}
+  .caso{display:grid;grid-template-columns:1.3fr .7fr;gap:36px;align-items:center;padding:34px}
+  .caso-marca{margin:0 0 14px;display:flex;align-items:center;gap:12px;font-weight:600;font-size:.9rem;text-transform:uppercase;letter-spacing:.06em;color:var(--tinta-suave)}
+  .caso-logo{width:64px;height:64px;border-radius:50%;flex:none;box-shadow:0 6px 16px -10px rgba(74,50,36,.55)}
+  .caso-marca span{color:var(--vermelho-escuro);font-weight:800}
+  .caso-destaque{margin:0 0 18px;display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 14px}
+  .caso-destaque strong{font-size:clamp(3rem,7vw,4.2rem);font-weight:800;line-height:1;color:var(--verde-escuro);letter-spacing:-.03em}
+  .caso-destaque span{font-family:var(--mao);font-size:1.6rem;color:var(--cafe);line-height:1.1}
+  .caso-contexto{margin:0 0 22px;padding-left:1.2em;color:var(--tinta-suave)}
+  .caso-contexto li{margin:4px 0}
+  .caso-numeros{list-style:none;margin:0 0 20px;padding:16px 0;display:grid;grid-template-columns:repeat(4,1fr);gap:10px;border-top:2px dashed rgba(107,74,53,.2);border-bottom:2px dashed rgba(107,74,53,.2)}
+  .caso-numeros strong{display:block;font-size:1.6rem;font-weight:800;color:var(--cafe);line-height:1.1}
+  .caso-numeros span{font-size:.85rem;color:var(--tinta-suave)}
+  /* Selo de destaque: cliente recorrente */
+  .caso-fechamento{margin:0;display:inline-flex;align-items:center;gap:10px;padding:.65em 1.2em;border-radius:999px;background:#e8f0e6;border:2px dashed var(--verde);color:var(--verde-escuro);font-weight:800;font-size:1.12rem}
+  .caso-fechamento::before{content:"\21BB";display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--verde);color:#fff;font-size:1rem;font-weight:700;flex:none}
+  .caso-print{width:100%;max-width:290px;height:auto;justify-self:center;border-radius:18px;box-shadow:0 18px 40px -20px rgba(0,0,0,.55)}
+  .caso-cta{margin:26px 0 0;text-align:center}
+  .cabeca h2.titulo-frase{font-size:clamp(1.7rem,4vw,2.4rem);line-height:1.2}
+  .cabeca h2.titulo-frase strong{color:#8b6a52}
   .depoimentos{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(2,1fr);gap:22px}
   .depoimento{padding:28px 28px 24px;margin:0}
   .depoimento blockquote{margin:0 0 18px;font-size:1.08rem;color:var(--tinta)}
@@ -265,9 +321,13 @@
   .avatar{width:44px;height:44px;border-radius:50%;background:var(--creme-escuro);border:2px dashed var(--tracejado);display:grid;place-items:center;font-weight:800;color:var(--cafe);flex:none}
   .depoimento cite{font-style:normal;font-weight:700;color:var(--cafe-escuro);display:block}
   .depoimento .empresa{font-size:.9rem;color:var(--tinta-suave)}
+  .avatar-logo{padding:0;border:2px solid var(--papel);box-shadow:0 0 0 2px var(--tracejado);overflow:hidden;width:52px;height:52px}
+  .avatar-logo .logo-marca{width:100%;height:100%}
+  .estrelas{margin:0 0 8px;color:#c9a227;letter-spacing:.12em;font-size:1.1rem}
   @media (max-width: 900px){
     .metricas{grid-template-columns:repeat(2,1fr)}
-    .resultados{grid-template-columns:1fr}
+    .caso{grid-template-columns:1fr;padding:26px 22px}
+    .caso-numeros{grid-template-columns:repeat(2,1fr)}
     .depoimentos{grid-template-columns:1fr}
   }
 
@@ -326,25 +386,33 @@
 </style>
 </head>
 <body>
-<a class="pular" href="#conteudo">Pular para o conteúdo</a>
+<a class="pular" href="#conteudo" data-t="pular">Pular para o conteúdo</a>
 
 <!-- ================= 1. CAPA ================= -->
 <header class="topo">
   <div class="container">
     <a class="logo" href="#inicio">Mariana Lino <span class="mao">ugc</span></a>
-    <button class="menu-botao" type="button" aria-expanded="false" aria-controls="menu" aria-label="Abrir menu">
-      <span></span><span></span><span></span>
-    </button>
-    <nav class="menu" id="menu" aria-label="Menu principal">
-      <ul>
-        <li><a href="#sobre">Sobre</a></li>
-        <li><a href="#destaques">Destaques</a></li>
-        <li><a href="#trabalhos">Trabalhos</a></li>
-        <li><a href="#servicos">Serviços</a></li>
-        <li><a href="#numeros">Números</a></li>
-        <li><a href="#contato">Contato</a></li>
-      </ul>
-    </nav>
+    <div class="topo-direita">
+      <nav class="menu" id="menu" aria-label="Menu principal" data-t-aria="menu_aria">
+        <ul>
+          <li><a href="#sobre" data-t="menu_sobre">Sobre</a></li>
+          <li><a href="#destaques" data-t="menu_destaques">Destaques</a></li>
+          <li><a href="#trabalhos" data-t="menu_trabalhos">Trabalhos</a></li>
+          <li><a href="#servicos" data-t="menu_servicos">Serviços</a></li>
+          <li><a href="#numeros" data-t="menu_numeros">Números</a></li>
+          <li><a href="#contato" data-t="menu_contato">Contato</a></li>
+          <li class="so-celular"><a href="#contato" data-t="trabalhe">Trabalhe comigo</a></li>
+        </ul>
+      </nav>
+      <div class="idioma" role="group" aria-label="Idioma / Language">
+        <button type="button" data-idioma="pt" aria-pressed="true" lang="pt-BR" title="Português">PT</button>
+        <button type="button" data-idioma="en" aria-pressed="false" lang="en" title="English">EN</button>
+      </div>
+      <a class="botao-topo" href="#contato" data-t="trabalhe">Trabalhe comigo</a>
+      <button class="menu-botao" type="button" aria-expanded="false" aria-controls="menu" aria-label="Abrir menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
   </div>
 </header>
 
@@ -352,32 +420,34 @@
   <section class="capa" id="inicio" aria-labelledby="titulo-capa">
     <div class="container capa-grade">
       <div>
-        <p class="capa-oi">Oi, marca! Aqui é a</p>
+        <p class="capa-oi" data-t="capa_oi">Oi, marca! Aqui é a</p>
         <h1 id="titulo-capa">Mariana Lino</h1>
-        <p class="capa-frase">Creator UGC que transforma o seu produto em <strong>vídeo com cara de indicação de amiga</strong>, feito para parar o dedo e vender nas redes.</p>
+        <p class="capa-frase" data-t="capa_frase">Creator UGC que transforma o seu produto em <strong>vídeo com cara de indicação de amiga</strong>, feito para parar o dedo e vender nas redes.</p>
         <div class="capa-botoes">
-          <a class="botao botao-principal" href="#contato">Falar comigo</a>
-          <a class="botao botao-secundario" href="#trabalhos">Ver os trabalhos</a>
+          <a class="botao botao-principal" href="#contato" data-t="capa_falar">Falar comigo</a>
+          <a class="botao botao-secundario" href="#trabalhos" data-t="capa_ver">Ver os trabalhos</a>
         </div>
         <!-- Os três números da capa vêm das três primeiras métricas do array "metricas" no script -->
         <div class="capa-numeros cartao" id="capa-numeros"></div>
       </div>
 
       <div class="capa-foto-wrap">
-        <div class="selo" aria-hidden="true"><span>10ª<small>grátis</small></span></div>
         <div class="cartao">
           <!-- FOTO DA CAPA: troque este div por
                <img src="minha-foto.jpg" alt="Mariana Lino sorrindo com um produto na mão" width="800" height="1000">
                (formato 4:5, de preferência em .webp ou .jpg com menos de 200 KB) -->
-          <div class="midia r-4x5" role="img" aria-label="Espaço para a foto da Mariana Lino" data-legenda="foto da creator 4:5"></div>
+          <div class="midia r-4x5 com-foto">
+            <img src="foto-capa.jpg" alt="Mariana Lino de blazer branco, com a mão apoiada no rosto, olhando para a câmera" data-t-alt="capa_foto_alt" width="880" height="1320" fetchpriority="high" style="object-position:50% 30%">
+          </div>
         </div>
-        <span class="legenda-mao" aria-hidden="true">prazer, Mari!</span>
+        <span class="legenda-mao" aria-hidden="true" data-t="capa_legenda">prazer, Mari!</span>
       </div>
     </div>
 
     <div class="faixa" aria-labelledby="titulo-marcas">
-      <p class="faixa-titulo" id="titulo-marcas">marcas que já carimbaram o meu cartão</p>
-      <ul class="carimbos" id="carimbos"></ul>
+      <p class="faixa-titulo" id="titulo-marcas" data-t="marcas_titulo">marcas que confiam no meu trabalho</p>
+      <!-- As logos vêm do array "marcas" no script -->
+      <div class="esteira"><ul class="esteira-trilho" id="esteira"></ul></div>
     </div>
   </section>
 
@@ -385,23 +455,21 @@
   <section class="secao" id="sobre" aria-labelledby="titulo-sobre">
     <div class="container sobre-grade">
       <div class="cartao sobre-foto revelar">
-        <!-- FOTO DO SOBRE: troque este div por
-             <img src="sobre.jpg" alt="Mariana Lino gravando um vídeo em casa" width="800" height="1000" loading="lazy"> -->
-        <div class="midia r-4x5" role="img" aria-label="Espaço para uma foto da Mariana gravando" data-legenda="foto dos bastidores 4:5" style="background:linear-gradient(160deg,#eef2e8 0%,#a9c1a4 50%,#4f7a54 100%)"></div>
+        <!-- FOTO DO SOBRE: para trocar, substitua o arquivo foto-sobre.jpg (formato vertical, até uns 200 KB) -->
+        <div class="midia r-4x5 com-foto">
+          <img src="foto-sobre.jpg?v=2" alt="Mariana Lino gravando um vídeo de maquiagem, passando gloss com o celular no tripé" data-t-alt="sobre_foto_alt" width="565" height="1000" loading="lazy" style="object-position:50% 25%;filter:brightness(1.12)">
+        </div>
       </div>
       <div class="cartao picote sobre-texto revelar">
         <div class="cabeca" style="margin-bottom:18px">
-          <span class="mao">sobre mim</span>
-          <h2 id="titulo-sobre">Prazer, eu sou a Mari</h2>
+          <span class="mao" data-t="sobre_mao">sobre mim</span>
+          <h2 id="titulo-sobre" data-t="sobre_titulo">Prazer, eu sou a Mari</h2>
         </div>
-        <p>Moro em Balneário Camboriú/SC e crio conteúdo para marcas que querem ser lembradas do jeito certo: com verdade, carinho e aquele tom de conversa de amiga. Testo cada produto de verdade antes de gravar, e é por isso que o público sente que pode confiar.</p>
-        <p>Atendo marcas de beleza, skincare, moda, casa e decoração, maternidade e tech. Comigo, você sabe exatamente o que vai receber:</p>
-        <ul class="promessas">
-          <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>Roteiro aprovado por você antes de gravar</li>
-          <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>Uma rodada de ajuste inclusa</li>
-          <li><span class="check" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>Entrega em até 72 horas úteis</li>
-        </ul>
-        <p class="assinatura">Mariana Lino</p>
+        <p data-t="sobre_p1">Tenho <strong>30 anos</strong>, sou <strong>UGC Creator</strong>, mãe de uma menina e um menino e moro em <strong>Balneário Camboriú, no litoral de SC</strong>.</p>
+        <p data-t="sobre_p1b">Trago na bagagem <strong>10 anos de experiência em fotografia</strong>, e é daí que vem o meu olhar para luz, enquadramento e detalhe: o seu produto aparece do jeito que ele merece.</p>
+        <p data-t="sobre_p1d">Também sou <strong>formada em Nutrição</strong>, o que me permite falar de alimentação, suplementos e bem-estar com propriedade e responsabilidade.</p>
+        <p data-t="sobre_p1c">Já colaborei com <strong>marcas do Brasil e do exterior</strong>, criando conteúdos pensados para performance: do gancho ao CTA.</p>
+        <p data-t="sobre_p1e">Como mãe, testo tudo na rotina real da minha casa, e é essa verdade que cria conexão com o público e transforma produto em desejo de compra.</p>
       </div>
     </div>
   </section>
@@ -410,58 +478,67 @@
   <section class="secao" id="destaques" aria-labelledby="titulo-destaques" style="padding-top:20px">
     <div class="container">
       <div class="cabeca revelar">
-        <span class="mao">os preferidos da casa</span>
-        <h2 id="titulo-destaques">Conteúdos de destaque</h2>
-        <p>Três vídeos que mostram como eu trabalho. Toque no card para assistir.</p>
+        <h2 id="titulo-destaques" data-t="destaques_titulo">Conteúdos de destaque</h2>
+        <p data-t="destaques_p">Três vídeos que mostram como eu trabalho. Toque no card para assistir.</p>
       </div>
 
       <div class="destaques">
-        <!-- DESTAQUE 1
-             LINK DO VÍDEO: troque o href abaixo pelo link do reels, TikTok ou Drive.
-             CAPA: troque o div .midia por <img src="capa-1.jpg" alt="Descrição da capa" width="540" height="960" loading="lazy">
-             (mantenha o span .play logo depois da imagem, dentro do mesmo div, se quiser o botão por cima) -->
-        <a class="video-card cartao revelar" href="https://www.instagram.com/marianalinougc/" target="_blank" rel="noopener" aria-label="Assistir destaque 1: TÍTULO DO VÍDEO 1 (abre em nova aba)">
-          <div class="midia r-9x16" data-legenda="capa do vídeo 9:16">
+        <!-- DESTAQUE 1: Alô Casa
+             VÍDEO DO YOUTUBE: código do vídeo em data-youtube e link completo no href. -->
+        <a class="video-card cartao revelar" data-youtube="tkJYbJM6-VU" href="https://youtube.com/shorts/tkJYbJM6-VU" target="_blank" rel="noopener" aria-label="Assistir vídeo: Alô Casa, mais de 30 milhões de views" data-t-aria="video1_aria">
+          <div class="midia r-9x16" data-legenda="capa do vídeo 9:16" data-t-legenda="video_legenda">
             <span class="play" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 4l14 8-14 8z"/></svg></span>
           </div>
           <div class="video-info">
-            <div class="video-numero">+00K</div>
-            <span class="video-rotulo">views no reels</span>
-            <h3>TÍTULO DO VÍDEO 1</h3>
-            <p>Marca, nicho e o objetivo do vídeo em uma linha.</p>
+            <div class="video-numero" data-t="video1_numero">+30 milhões</div>
+            <span class="video-rotulo" data-t="video1_rotulo">de views</span>
+            <h3 data-t="video1_titulo">Alô Casa</h3>
+            <p data-t="video1_contexto">Casa e decoração · Gerar desejo pelo produto.</p>
           </div>
         </a>
 
-        <!-- DESTAQUE 2
-             LINK DO VÍDEO: troque o href abaixo.
-             CAPA: troque o div .midia pela sua imagem 9:16. -->
-        <a class="video-card cartao revelar" href="https://www.instagram.com/marianalinougc/" target="_blank" rel="noopener" aria-label="Assistir destaque 2: TÍTULO DO VÍDEO 2 (abre em nova aba)">
-          <div class="midia r-9x16" data-legenda="capa do vídeo 9:16">
+        <!-- DESTAQUE 2: Pingo de Gente Joias
+             VÍDEO DO YOUTUBE: coloque o código do vídeo em data-youtube (o que vem depois de /shorts/ no link)
+             e o link completo no href. A capa, a prévia ao passar o mouse e o vídeo grande ao clicar aparecem sozinhos.
+             -->
+        <a class="video-card cartao revelar" data-youtube="CbgpAWzsRbs" data-capa="oar3" href="https://youtube.com/shorts/CbgpAWzsRbs?feature=share" target="_blank" rel="noopener" aria-label="Assistir vídeo: Pingo de Gente Joias, 10 mil visualizações" data-t-aria="video2_aria">
+          <div class="midia r-9x16" data-legenda="capa do vídeo 9:16" data-t-legenda="video_legenda">
             <span class="play" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 4l14 8-14 8z"/></svg></span>
           </div>
           <div class="video-info">
-            <div class="video-numero">+00%</div>
-            <span class="video-rotulo">de engajamento</span>
-            <h3>TÍTULO DO VÍDEO 2</h3>
-            <p>Marca, nicho e o objetivo do vídeo em uma linha.</p>
+            <div class="video-numero" data-t="video2_numero">10 mil</div>
+            <span class="video-rotulo" data-t="video2_rotulo">visualizações totais</span>
+            <h3 data-t="video2_titulo">Pingo de Gente Joias</h3>
+            <p data-t="video2_contexto">Maternidade · Emocionar e aproximar a marca das mães na campanha de Dia das Mães.</p>
           </div>
         </a>
-
-        <!-- DESTAQUE 3
-             LINK DO VÍDEO: troque o href abaixo.
-             CAPA: troque o div .midia pela sua imagem 9:16. -->
-        <a class="video-card cartao revelar" href="https://www.instagram.com/marianalinougc/" target="_blank" rel="noopener" aria-label="Assistir destaque 3: TÍTULO DO VÍDEO 3 (abre em nova aba)">
-          <div class="midia r-9x16" data-legenda="capa do vídeo 9:16">
+        <!-- DESTAQUE 3: Riise
+             VÍDEO DO YOUTUBE: código do vídeo em data-youtube e link completo no href. -->
+        <a class="video-card cartao revelar" data-youtube="d5L674598xU" data-capa="oar3" href="https://youtube.com/shorts/d5L674598xU" target="_blank" rel="noopener" aria-label="Assistir vídeo: Riise, mais de 60 novos inscritos" data-t-aria="video3_aria">
+          <div class="midia r-9x16" data-legenda="capa do vídeo 9:16" data-t-legenda="video_legenda">
             <span class="play" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 4l14 8-14 8z"/></svg></span>
           </div>
           <div class="video-info">
-            <div class="video-numero">+000</div>
-            <span class="video-rotulo">vendas no anúncio</span>
-            <h3>TÍTULO DO VÍDEO 3</h3>
-            <p>Marca, nicho e o objetivo do vídeo em uma linha.</p>
+            <div class="video-numero">+60</div>
+            <span class="video-rotulo" data-t="video3_rotulo">novos inscritos</span>
+            <h3 data-t="video3_titulo">Riise</h3>
+            <p data-t="video3_contexto">Tecnologia · Conversão para assinaturas.</p>
           </div>
         </a>
       </div>
+    </div>
+  </section>
+
+  <!-- ================= CASE DE SUCESSO ================= -->
+  <section class="secao" id="case" aria-labelledby="titulo-case" style="padding-top:20px">
+    <div class="container">
+      <div class="cabeca revelar">
+        <span class="mao" data-t="case_mao">resultado de verdade</span>
+        <h2 id="titulo-case" class="titulo-frase" data-t="caso_intro">Resultado não vem só de anúncio: <strong>conteúdo orgânico bem feito também vende.</strong></h2>
+      </div>
+      <!-- Os cases vêm do array "cases" no script -->
+      <ul class="cases" id="lista-cases"></ul>
+      <p class="caso-cta revelar"><a class="botao botao-principal" href="#contato" data-t="caso_cta">Quero esses resultados para minha marca</a></p>
     </div>
   </section>
 
@@ -469,11 +546,11 @@
   <section class="secao" id="trabalhos" aria-labelledby="titulo-trabalhos" style="padding-top:20px">
     <div class="container">
       <div class="cabeca revelar">
-        <span class="mao">escolha o seu nicho</span>
-        <h2 id="titulo-trabalhos">Trabalhos por nicho</h2>
-        <p>Filtre pelo universo da sua marca e veja o que eu já criei por aí.</p>
+        <span class="mao" data-t="trabalhos_mao">escolha o seu nicho</span>
+        <h2 id="titulo-trabalhos" data-t="trabalhos_titulo">Trabalhos por nicho</h2>
+        <p data-t="trabalhos_p">Filtre pelo universo da sua marca e veja o que eu já criei por aí.</p>
       </div>
-      <div class="filtros" id="filtros" role="group" aria-label="Filtrar trabalhos por nicho"></div>
+      <div class="filtros" id="filtros" role="group" aria-label="Filtrar trabalhos por nicho" data-t-aria="filtros_aria"></div>
       <ul class="galeria" id="galeria"></ul>
       <p class="contagem" id="contagem" aria-live="polite"></p>
     </div>
@@ -483,9 +560,9 @@
   <section class="secao" id="servicos" aria-labelledby="titulo-servicos" style="padding-top:20px">
     <div class="container">
       <div class="cabeca revelar">
-        <span class="mao">o cardápio</span>
-        <h2 id="titulo-servicos">Como eu te ajudo</h2>
-        <p>Do vídeo avulso ao pacote do mês inteiro. Monte o seu pedido.</p>
+        <span class="mao" data-t="servicos_mao">o cardápio</span>
+        <h2 id="titulo-servicos" data-t="servicos_titulo">Como eu te ajudo</h2>
+        <p data-t="servicos_p">Do vídeo avulso ao pacote do mês inteiro. Monte o seu pedido.</p>
       </div>
       <ul class="servicos" id="lista-servicos"></ul>
     </div>
@@ -495,15 +572,13 @@
   <section class="secao" id="numeros" aria-labelledby="titulo-numeros" style="padding-top:20px">
     <div class="container">
       <div class="cabeca revelar">
-        <span class="mao">cartão carimbado</span>
-        <h2 id="titulo-numeros">Números e depoimentos</h2>
+        <span class="mao" data-t="numeros_mao">cartão carimbado</span>
+        <h2 id="titulo-numeros" data-t="numeros_titulo">Números e depoimentos</h2>
       </div>
       <ul class="metricas" id="lista-metricas"></ul>
 
-      <h3 class="subtitulo revelar">Resultados de campanha</h3>
-      <ul class="resultados" id="lista-resultados"></ul>
 
-      <h3 class="subtitulo revelar">O que as marcas dizem</h3>
+      <h3 class="subtitulo revelar" data-t="depoimentos_titulo">O que as marcas dizem</h3>
       <ul class="depoimentos" id="lista-depoimentos"></ul>
     </div>
   </section>
@@ -512,9 +587,9 @@
   <section class="secao" id="contato" aria-labelledby="titulo-contato" style="padding-top:20px">
     <div class="container">
       <div class="cabeca revelar">
-        <span class="mao">seu próximo carimbo</span>
-        <h2 id="titulo-contato">Bora criar juntos?</h2>
-        <p>Me conta sobre a sua marca e o seu produto. Eu respondo em até um dia útil.</p>
+        <span class="mao" data-t="contato_mao">seu próximo carimbo</span>
+        <h2 id="titulo-contato" data-t="contato_titulo">Bora criar juntos?</h2>
+        <p data-t="contato_p">Me conta sobre a sua marca e o seu produto. Eu respondo em até um dia útil.</p>
       </div>
       <div class="contato-grade">
         <!-- FORMULÁRIO: hoje ele só mostra a confirmação na tela.
@@ -523,24 +598,24 @@
              e apague o trecho "evento.preventDefault()" do formulário de contato no script. -->
         <form class="cartao picote formulario revelar" id="form-contato" novalidate>
           <div class="campo">
-            <label for="nome">Seu nome</label>
+            <label for="nome" data-t="label_nome">Seu nome</label>
             <input id="nome" name="nome" type="text" autocomplete="name" required>
           </div>
           <div class="campo">
-            <label for="email">Seu e-mail</label>
+            <label for="email" data-t="label_email">Seu e-mail</label>
             <input id="email" name="email" type="email" autocomplete="email" required>
           </div>
           <div class="campo">
-            <label for="mensagem">Mensagem</label>
-            <textarea id="mensagem" name="mensagem" required placeholder="Marca, produto, prazo e o que você imagina para o vídeo"></textarea>
+            <label for="mensagem" data-t="label_mensagem">Mensagem</label>
+            <textarea id="mensagem" name="mensagem" required placeholder="Marca, produto, prazo e o que você imagina para o vídeo" data-t-placeholder="mensagem_placeholder"></textarea>
           </div>
-          <button class="botao botao-principal" type="submit">Enviar mensagem</button>
+          <button class="botao botao-principal" type="submit" data-t="enviar">Enviar mensagem</button>
           <p class="confirmacao" id="confirmacao-contato" role="status" tabindex="-1"></p>
         </form>
 
         <aside class="cartao contato-lado revelar" aria-labelledby="titulo-direto">
-          <h3 id="titulo-direto">Prefere falar direto?</h3>
-          <p>Escolhe o canal que for mais fácil pra você.</p>
+          <h3 id="titulo-direto" data-t="direto_titulo">Prefere falar direto?</h3>
+          <p data-t="direto_p">Escolhe o canal que for mais fácil pra você.</p>
           <div class="contato-botoes">
             <a class="botao botao-verde" href="https://wa.me/5547999916262" target="_blank" rel="noopener">
               <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 00-8.6 15.1L2 22l5-1.3A10 10 0 1012 2zm0 18.2a8.2 8.2 0 01-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1112 20.2zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8s-.4-.1-.6.1-.7.8-.8 1-.3.2-.5.1a6.7 6.7 0 01-3.3-2.9c-.2-.4.2-.4.7-1.3a.5.5 0 000-.4l-.8-1.9c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 00-.7.3 3 3 0 00-.9 2.2 5.2 5.2 0 001.1 2.7 11.8 11.8 0 004.5 4c1.7.7 2.3.8 3.2.6a2.7 2.7 0 001.7-1.2 2.2 2.2 0 00.2-1.2c-.1-.1-.3-.2-.5-.3z"/></svg>
@@ -550,12 +625,16 @@
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>
               contatomaarianalino@gmail.com
             </a>
+            <a class="botao botao-secundario" href="https://www.tiktok.com/discover/marianalinougc" target="_blank" rel="noopener">
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.6 3c.3 2.2 1.6 3.7 3.9 3.9v3a7 7 0 01-3.9-1.2v6.1A5.8 5.8 0 1110.8 9v3.1a2.8 2.8 0 102 2.7V3h3.8z"/></svg>
+              TikTok
+            </a>
             <a class="botao botao-secundario" href="https://www.instagram.com/marianalinougc/" target="_blank" rel="noopener">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>
               @marianalinougc
             </a>
           </div>
-          <p class="contato-cidade">de Balneário Camboriú para o Brasil todo</p>
+          <p class="contato-cidade" data-t="cidade">de Balneário Camboriú para o mundo todo</p>
         </aside>
       </div>
     </div>
@@ -566,7 +645,8 @@
 <footer class="rodape">
   <div class="container">
     <p class="rodape-nome" style="margin:0">Mariana Lino <span class="mao">ugc</span></p>
-    <ul class="redes" aria-label="Minhas redes">
+    <ul class="redes" aria-label="Minhas redes" data-t-aria="redes_aria">
+      <li><a href="https://www.tiktok.com/discover/marianalinougc" target="_blank" rel="noopener">TikTok</a></li>
       <li><a href="https://www.instagram.com/marianalinougc/" target="_blank" rel="noopener">Instagram</a></li>
       <li><a href="https://wa.me/5547999916262" target="_blank" rel="noopener">WhatsApp</a></li>
       <li><a href="mailto:contatomaarianalino@gmail.com">E-mail</a></li>
@@ -575,24 +655,32 @@
   </div>
 </footer>
 
+<!-- ================= JANELA DO VÍDEO (abre ao clicar num destaque do YouTube) ================= -->
+<div class="video-modal" id="video-modal" hidden>
+  <div class="video-modal-caixa" role="dialog" aria-modal="true" aria-label="Vídeo" data-t-aria="video_janela">
+    <button class="modal-fechar" type="button" id="video-fechar" aria-label="Fechar" data-t-aria="modal_fechar">&times;</button>
+    <div id="video-player" style="width:100%;height:100%"></div>
+  </div>
+</div>
+
 <!-- ================= CARD DE CAPTURA (aparece após 7 segundos, uma vez por visita) ================= -->
 <div class="modal-fundo" id="modal-fundo" hidden>
   <div class="modal cartao picote" role="dialog" aria-modal="true" aria-labelledby="titulo-modal">
-    <button class="modal-fechar" type="button" id="modal-fechar" aria-label="Fechar">&times;</button>
-    <span class="mao">presentinho</span>
-    <h2 id="titulo-modal">Quer meu mídia kit completo?</h2>
-    <p>Deixa seu nome e e-mail que eu te mando com valores, formatos e cases.</p>
+    <button class="modal-fechar" type="button" id="modal-fechar" aria-label="Fechar" data-t-aria="modal_fechar">&times;</button>
+    <span class="mao" data-t="modal_mao">presentinho</span>
+    <h2 id="titulo-modal" data-t="modal_titulo">Quer meu mídia kit completo?</h2>
+    <p data-t="modal_p">Deixa seu nome e e-mail que eu te mando com valores, formatos e cases.</p>
     <!-- Igual ao formulário de contato: para receber os dados, ligue este form ao Formspree ou similar. -->
     <form id="form-kit" novalidate>
       <div class="campo">
-        <label for="kit-nome">Seu nome</label>
+        <label for="kit-nome" data-t="label_nome">Seu nome</label>
         <input id="kit-nome" name="nome" type="text" autocomplete="name" required>
       </div>
       <div class="campo">
-        <label for="kit-email">Seu e-mail</label>
+        <label for="kit-email" data-t="label_email">Seu e-mail</label>
         <input id="kit-email" name="email" type="email" autocomplete="email" required>
       </div>
-      <button class="botao botao-principal" type="submit">Quero receber</button>
+      <button class="botao botao-principal" type="submit" data-t="kit_botao">Quero receber</button>
       <p class="confirmacao" id="confirmacao-kit" role="status" tabindex="-1"></p>
     </form>
   </div>
@@ -605,73 +693,246 @@
    Tudo o que está em MAIÚSCULAS ou com "00" é placeholder para trocar.
    ===================================================================== */
 
-/* MARCAS: viram os 12 carimbos da faixa da capa. Troque "Marca 02" em diante pelos nomes reais. */
+/* MARCAS: as logos que passam na faixa "marcas que confiam no meu trabalho".
+   "nome" é lido por quem usa leitor de tela. "logo" é a posição da logo na imagem marcas.jpg (0 é a primeira da esquerda).
+   "Marca parceira" são as logos que só têm símbolo: troque pelo nome real quando souber. */
 const marcas = [
-  "Likluc", "Marca 02", "Marca 03", "Marca 04", "Marca 05", "Marca 06",
-  "Marca 07", "Marca 08", "Marca 09", "Marca 10", "Marca 11", "Marca 12"
+  { nome: "L'Oréal Elseve",     logo: 0 },
+  { nome: "Lar",                logo: 1 },
+  { nome: "Marca parceira",     logo: 2 },
+  { nome: "Marca parceira",     logo: 3 },
+  { nome: "Marca parceira",     logo: 4 },
+  { nome: "Natuzinho",          logo: 5 },
+  { nome: "Alfaparf Alta Moda", logo: 6 },
+  { nome: "Somnii",             logo: 7 },
+  { nome: "Bebê Bistrô",        logo: 8 },
+  { nome: "Marca parceira",     logo: 9 },
+  { nome: "Zebra",              logo: 10 },
+  { nome: "Doce Noite",         logo: 11 },
+  { nome: "Bianco",             logo: 12 },
+  { nome: "Likluc",             logo: 13 },
+  { nome: "Marca parceira",     logo: 14 },
+  { nome: "Marca parceira",     logo: 15 },
+  { nome: "Marca parceira",     logo: 16 },
+  { nome: "Souu",               logo: 17 },
+  { nome: "MRNH",               logo: 18 },
+  { nome: "Mimo",               logo: 19 },
+  { nome: "Riise",              logo: 20 },
+  { nome: "Monti Eyewear",      logo: 21 },
+  { nome: "Marca parceira",     logo: 22 },
+  { nome: "Marca parceira",     logo: 23 },
+  { nome: "English Path",       logo: 24 },
+  { nome: "Respacelly",         logo: 25 },
+  { nome: "Coala Home",         logo: 26 },
+  { nome: "Tropical",           logo: 27 }
 ];
+const TOTAL_LOGOS = 28; /* quantas logos existem na imagem marcas.jpg */
+
+/* VERSÃO EM INGLÊS
+   Nas listas abaixo, os campos que terminam em "En" são o texto em inglês daquele item
+   (ex.: "titulo" em português e "tituloEn" em inglês). Se um campo "En" ficar vazio, aparece o português. */
 
 /* NICHOS: os botões de filtro. O "id" precisa ser igual ao campo "nicho" dos trabalhos. */
+/* A ordem desta lista é a ordem dos botões de filtro e dos trabalhos em "Todos" */
 const nichos = [
-  { id: "beleza",      nome: "Beleza" },
-  { id: "skincare",    nome: "Skincare" },
-  { id: "moda",        nome: "Moda" },
-  { id: "casa",        nome: "Casa e decoração" },
-  { id: "maternidade", nome: "Maternidade" },
-  { id: "tech",        nome: "Tech" }
+  { id: "moda",        nome: "Moda e acessórios", nomeEn: "Fashion and accessories" },
+  { id: "skincare",    nome: "Skincare",         nomeEn: "Skincare" },
+  { id: "maternidade", nome: "Maternidade",      nomeEn: "Motherhood" },
+  { id: "beleza",      nome: "Beleza",           nomeEn: "Beauty" },
+  { id: "casa",        nome: "Casa e decoração", nomeEn: "Home and decor" },
+  { id: "cuidados",    nome: "Cuidados pessoais", nomeEn: "Personal care" },
+  { id: "alimentacao", nome: "Alimentação e fitness", nomeEn: "Food and fitness" },
+  { id: "financas",    nome: "Finanças",         nomeEn: "Finance" },
+  { id: "tech",        nome: "Sites e apps",     nomeEn: "Websites and apps" }
 ];
 
 /* TRABALHOS: cada item aparece na galeria.
    Para usar uma imagem real, preencha "imagem" com o caminho (ex.: "trabalhos/likluc.jpg")
-   e "alt" com a descrição da imagem. Se ficar vazio, aparece o bloco com degradê. */
+   e "alt" com a descrição da imagem. Se ficar vazio, aparece o bloco com degradê.
+   Para um vídeo do YouTube, preencha "youtube" com o código do vídeo: a capa, a prévia e o vídeo grande aparecem sozinhos.
+   "capa" é opcional: "oar1", "oar2" ou "oar3", conforme a opção de capa escolhida no YouTube Studio. */
 const trabalhos = [
-  { nicho: "beleza",      titulo: "TÍTULO DO TRABALHO",   marca: "Likluc",   formato: "Vídeo UGC",       imagem: "", alt: "" },
-  { nicho: "beleza",      titulo: "TÍTULO DO TRABALHO",   marca: "Marca 02", formato: "Unboxing",        imagem: "", alt: "" },
-  { nicho: "skincare",    titulo: "TÍTULO DO TRABALHO",   marca: "Marca 03", formato: "Vídeo UGC",       imagem: "", alt: "" },
-  { nicho: "skincare",    titulo: "TÍTULO DO TRABALHO",   marca: "Marca 04", formato: "Fotos do produto", imagem: "", alt: "" },
-  { nicho: "moda",        titulo: "TÍTULO DO TRABALHO",   marca: "Marca 05", formato: "Corte para anúncio", imagem: "", alt: "" },
-  { nicho: "moda",        titulo: "TÍTULO DO TRABALHO",   marca: "Marca 06", formato: "Vídeo UGC",       imagem: "", alt: "" },
-  { nicho: "casa",        titulo: "TÍTULO DO TRABALHO",   marca: "Marca 07", formato: "Fotos do produto", imagem: "", alt: "" },
-  { nicho: "casa",        titulo: "TÍTULO DO TRABALHO",   marca: "Marca 08", formato: "Vídeo UGC",       imagem: "", alt: "" },
-  { nicho: "maternidade", titulo: "TÍTULO DO TRABALHO",   marca: "Marca 09", formato: "Unboxing",        imagem: "", alt: "" },
-  { nicho: "maternidade", titulo: "TÍTULO DO TRABALHO",   marca: "Marca 10", formato: "Vídeo UGC",       imagem: "", alt: "" },
-  { nicho: "tech",        titulo: "TÍTULO DO TRABALHO",   marca: "Marca 11", formato: "Corte para anúncio", imagem: "", alt: "" },
-  { nicho: "tech",        titulo: "TÍTULO DO TRABALHO",   marca: "Marca 12", formato: "Unboxing",        imagem: "", alt: "" }
+  /* BELEZA: vídeos do YouTube */
+  { nicho: "beleza", titulo: "Cheiro de Rica", formato: "Vídeo UGC", formatoEn: "UGC video", youtube: "bE7-iVNRbwA" },
+  { nicho: "beleza", titulo: "Diva Beauty",    formato: "Vídeo UGC", formatoEn: "UGC video", youtube: "TpePxiy5A8k" },
+  { nicho: "beleza", titulo: "Alta Moda",      formato: "Vídeo UGC", formatoEn: "UGC video", youtube: "IHGbwbvLn0s" },
+  { nicho: "beleza", titulo: "Parafina",       formato: "Vídeo UGC", formatoEn: "UGC video", youtube: "6l38EqlwkMk" },
+  /* SKINCARE: vídeos do YouTube */
+  { nicho: "skincare", titulo: "Souu Beauty",      formato: "Vídeo UGC", formatoEn: "UGC video", youtube: "GkZyXgckaWk" },
+  { nicho: "skincare", titulo: "Garnier",          formato: "Vídeo UGC", formatoEn: "UGC video", youtube: "cbXOe_jMh1w" },
+  { nicho: "skincare", titulo: "Dride Cosméticos", formato: "Vídeo UGC", formatoEn: "UGC video", youtube: "ol5PUABuYJY" },
+  { nicho: "skincare", titulo: "Beyoung",          formato: "Vídeo UGC", formatoEn: "UGC video", youtube: "xRZ28QHKf1Q", capa: "oar3" },
+  { nicho: "skincare", titulo: "Bioderma",         formato: "Vídeo UGC", formatoEn: "UGC video", youtube: "vF0psQT5UeI" },
+  /* MODA E ACESSÓRIOS: vídeos do YouTube */
+  { nicho: "moda", titulo: "Monti Eyewear",      formato: "Vídeo UGC", formatoEn: "UGC video", youtube: "0vA8lSm9f0o" },
+  { nicho: "moda", titulo: "Doce Noite Pijamas", formato: "Vídeo UGC", formatoEn: "UGC video", youtube: "ZI11bDlNxY4" },
+  { nicho: "moda", titulo: "Sunlike",            formato: "Vídeo UGC", formatoEn: "UGC video", youtube: "BDx4TFV-Ebo" },
+  { nicho: "moda", titulo: "Monti Eyewear",      formato: "Vídeo UGC", formatoEn: "UGC video", youtube: "p-e2FNFI7XY" },
+  { nicho: "moda", titulo: "Doce Noite Pijamas", formato: "Vídeo UGC", formatoEn: "UGC video", youtube: "dsTqBStSs5U" },
+  { nicho: "moda", titulo: "Vam Basic Lingerie", formato: "Vídeo UGC", formatoEn: "UGC video", youtube: "a7fKLlgKLp0" },
+  /* CASA E DECORAÇÃO: vídeos do YouTube */
+  { nicho: "casa", titulo: "Iroobot",         formato: "Vídeo UGC", formatoEn: "UGC video", youtube: "EMvJcew3LR0" },
+  { nicho: "casa", titulo: "Fortier",         formato: "Vídeo UGC", formatoEn: "UGC video", youtube: "R9j9NpL0vCs" },
+  { nicho: "casa", titulo: "Philips Walita",  formato: "Vídeo UGC", formatoEn: "UGC video", youtube: "HPCiWU6oHWA" },
+  { nicho: "casa", titulo: "Iroobot",         formato: "Vídeo UGC", formatoEn: "UGC video", youtube: "AF3BPRbteMQ" },
+  /* MATERNIDADE: vídeos do YouTube. "youtube" é o código do vídeo (o que vem depois de /shorts/ no link).
+     A ordem aqui é a ordem no site: evite deixar a mesma marca uma ao lado da outra */
+  { nicho: "maternidade", titulo: "Luance Joias",  formato: "Vídeo UGC", formatoEn: "UGC video", youtube: "5Fxl-Ex3sWo" },
+  { nicho: "maternidade", titulo: "Bebê Bistrô",   formato: "Vídeo UGC", formatoEn: "UGC video", youtube: "6Inif_IiCDE" },
+  { nicho: "maternidade", titulo: "Gocase",        formato: "Vídeo UGC", formatoEn: "UGC video", youtube: "MkfilgY9aO8" },
+  { nicho: "maternidade", titulo: "Onda Marinha",  formato: "Vídeo UGC", formatoEn: "UGC video", youtube: "aOQKQkvyZxM" },
+  { nicho: "maternidade", titulo: "Bebê Bistrô",   formato: "Vídeo UGC", formatoEn: "UGC video", youtube: "TVg0FZDNp-M" },
+  { nicho: "maternidade", titulo: "Somnii",        formato: "Vídeo UGC", formatoEn: "UGC video", youtube: "gOBBQIFHNks" },
+  { nicho: "maternidade", titulo: "Onda Marinha",  formato: "Vídeo UGC", formatoEn: "UGC video", youtube: "f2vlcxUFXNA" },
+  { nicho: "maternidade", titulo: "Likluc",        formato: "Vídeo UGC", formatoEn: "UGC video", youtube: "FAZqYXtGDfI" },
+  /* SITES E APPS: vídeos do YouTube */
+  { nicho: "tech", titulo: "English Path", formato: "Vídeo UGC", formatoEn: "UGC video", youtube: "3vo7wQcbZQk" },
+  { nicho: "tech", titulo: "English Path", formato: "Vídeo UGC", formatoEn: "UGC video", youtube: "4BZ9p92UI80" },
+  /* CUIDADOS PESSOAIS: vídeos do YouTube */
+  { nicho: "cuidados", titulo: "Livz",  formato: "Vídeo UGC", formatoEn: "UGC video", youtube: "XRAnXH0Nfxo" },
+  { nicho: "cuidados", titulo: "Bianco", formato: "Vídeo UGC", formatoEn: "UGC video", youtube: "i47ogR5Ql5s" },
+  /* ALIMENTAÇÃO E FITNESS: vídeos do YouTube */
+  { nicho: "alimentacao", titulo: "Magia de Cristal", formato: "Vídeo UGC", formatoEn: "UGC video", youtube: "XKMLYWkM3D8" },
+  /* FINANÇAS: vídeos do YouTube */
+  { nicho: "financas", titulo: "Ether.fi", formato: "Vídeo UGC", formatoEn: "UGC video", youtube: "BD9LMiAeWAc" }
 ];
 
 /* SERVIÇOS: os seis cards da seção "Como eu te ajudo". */
 const servicos = [
-  { titulo: "Vídeo UGC",            descricao: "Vídeo vertical com roteiro, gravação e edição, no tom de quem usa e recomenda o produto." },
-  { titulo: "Corte para anúncio",   descricao: "Versões curtas com gancho forte nos primeiros segundos, prontas para rodar no tráfego pago." },
-  { titulo: "Fotos do produto",     descricao: "Fotos em uso, no dia a dia, com luz natural e cara de vida real para feed, site e anúncio." },
-  { titulo: "Unboxing",             descricao: "A primeira impressão ao abrir a caixa, com reação sincera e os detalhes que fazem a diferença." },
-  { titulo: "Publicação no meu perfil", descricao: "O conteúdo vai ao ar no @marianalinougc, com collab e alcance para a minha audiência." },
-  { titulo: "Pacote mensal",        descricao: "Uma quantidade fixa de vídeos por mês, com calendário combinado e valor especial." }
+  { titulo: "Vídeo UGC", tituloEn: "UGC video",
+    descricao: "Vídeo vertical com roteiro, gravação e edição, no tom de quem usa e recomenda o produto.",
+    descricaoEn: "Vertical video with script, filming and editing, in the voice of someone who uses and recommends the product." },
+  { titulo: "Corte para anúncio", tituloEn: "Ad cuts",
+    descricao: "Versões curtas com gancho forte nos primeiros segundos, prontas para rodar no tráfego pago.",
+    descricaoEn: "Short versions with a strong hook in the first seconds, ready to run as paid ads." },
+  { titulo: "Fotos do produto", tituloEn: "Product photos",
+    descricao: "Fotos em uso, no dia a dia, com luz natural e cara de vida real para feed, site e anúncio.",
+    descricaoEn: "Photos of the product in everyday use, with natural light and a real life feel for your feed, website and ads." },
+  { titulo: "Unboxing", tituloEn: "Unboxing",
+    descricao: "A primeira impressão ao abrir a caixa, com reação sincera e os detalhes que fazem a diferença.",
+    descricaoEn: "The first impression when opening the box, with an honest reaction and the details that make a difference." },
+  { titulo: "Publicação no meu perfil", tituloEn: "Post on my profile",
+    descricao: "O conteúdo vai ao ar no @marianalinougc, com collab e alcance para a minha audiência.",
+    descricaoEn: "The content goes live on @marianalinougc as a collab, reaching my audience." },
+  { titulo: "Pacote mensal", tituloEn: "Monthly package",
+    descricao: "Uma quantidade fixa de vídeos por mês, com calendário combinado e valor especial.",
+    descricaoEn: "A set number of videos per month, with an agreed calendar and a special rate." }
 ];
 
 /* MÉTRICAS: as três primeiras também aparecem na capa.
-   "valor" é o número que o contador anima, "sufixo" vem logo depois (ex.: k, h, %). */
+   "valor" é o número que o contador anima, "sufixo" vem logo depois (ex.: k, h, %) e "prefixo" vem antes (ex.: +). */
 const metricas = [
-  { valor: 300, sufixo: "",  rotulo: "vídeos entregues" },
-  { valor: 100, sufixo: "",  rotulo: "marcas atendidas" },
-  { valor: 100, sufixo: "k", rotulo: "views somadas" },
-  { valor: 72,  sufixo: "h", rotulo: "prazo máximo de entrega" }
+  { valor: 400, sufixo: "",  prefixo: "+", rotulo: "vídeos entregues",        rotuloEn: "videos delivered" },
+  { valor: 100, sufixo: "",  prefixo: "+", rotulo: "marcas atendidas",        rotuloEn: "brands served" },
+  { valor: 100, sufixo: "k+", rotulo: "views somadas",           rotuloEn: "total views" },
+  { valor: 72,  sufixo: "h", rotulo: "prazo máximo de entrega", rotuloEn: "maximum delivery time" }
 ];
 
-/* RESULTADOS DE CAMPANHA: troque "+00%" e o texto pelo resultado real de cada campanha. */
-const resultados = [
-  { numero: "+00%", rotulo: "de vendas",       marca: "Likluc",   texto: "Descreva aqui o resultado real da campanha e o que foi entregue." },
-  { numero: "+00K", rotulo: "de alcance",      marca: "Marca 02", texto: "Descreva aqui o resultado real da campanha e o que foi entregue." },
-  { numero: "0,0x", rotulo: "de retorno (ROAS)", marca: "Marca 03", texto: "Descreva aqui o resultado real da campanha e o que foi entregue." }
+/* CASES DE SUCESSO: cada item vira um card grande na seção "Números e depoimentos".
+   Para incluir outro case, copie o bloco { ... } inteiro, cole depois da vírgula e troque os dados.
+   "imagem" é o print dos resultados (vertical, até uns 150 KB). */
+const cases = [
+  {
+    marca: "Bebê Bistrô", logo: "logo-bebe-bistro.jpg",
+    destaque: "+40", destaqueRotulo: "vendas só com o conteúdo orgânico", destaqueRotuloEn: "sales from organic content alone",
+    contexto: ["Marca estava com cerca de 500 seguidores", "Estava há um tempo sem realizar vendas", "Usou o vídeo de forma orgânica, sem anúncio"],
+    contextoEn: ["The brand had around 500 followers", "Had gone a while without any sales", "Used the video organically, with no paid ads"],
+    fechamento: "Virou minha cliente recorrente.", fechamentoEn: "It became a recurring client.",
+    imagem: "case-bebe-bistro.jpg",
+    alt: "Print dos insights do reel feito para a Bebê Bistrô, com 1.642 visualizações, 603 contas alcançadas e 983 compartilhamentos",
+    altEn: "Screenshot of the reel insights made for Bebê Bistrô, with 1,642 views, 603 accounts reached and 983 shares"
+  }
 ];
 
-/* DEPOIMENTOS: troque o texto, o nome e a empresa pelos dados reais. */
+/* DEPOIMENTOS: feedbacks reais das marcas (do Canva, página "Feedbacks").
+   "logo" é a posição da logo da marca na imagem marcas.jpg (a mesma numeração da lista "marcas").
+   "estrelas" é opcional: coloque 5 para mostrar ★★★★★. */
 const depoimentos = [
-  { texto: "Aqui entra o depoimento real do Cliente 01, em duas ou três frases sobre como foi trabalhar com você.", nome: "Cliente 01", empresa: "Empresa 01" },
-  { texto: "Aqui entra o depoimento real do Cliente 02, em duas ou três frases sobre como foi trabalhar com você.", nome: "Cliente 02", empresa: "Empresa 02" },
-  { texto: "Aqui entra o depoimento real do Cliente 03, em duas ou três frases sobre como foi trabalhar com você.", nome: "Cliente 03", empresa: "Empresa 03" },
-  { texto: "Aqui entra o depoimento real do Cliente 04, em duas ou três frases sobre como foi trabalhar com você.", nome: "Cliente 04", empresa: "Empresa 04" }
+  { nome: "Grupo Açucena", empresa: "MRNH", logo: 18, estrelas: 5,
+    texto: "Já é a terceira vez que trabalhamos com a Mari e ela sempre arrasa muito nas entregas! Entrega rápida, tem ótimo gosto para as captações, cenário e edição. Muito clean e alinhado com o que pedimos! Recomendo de olhos fechados!",
+    textoEn: "This is the third time we've worked with Mari and she always nails the deliveries! Fast turnaround, great taste in the shots, set and editing. Very clean and aligned with what we asked for! I recommend her with my eyes closed!" },
+  { nome: "Riise", empresa: "Marca parceira", empresaEn: "Partner brand", logo: 20,
+    texto: "Não quero alteração nenhuma. Você pegou tudo que eu queria falar de uma forma simples e muito objetiva. Exatamente o que eu precisava.",
+    textoEn: "I don't want a single change. You captured everything I wanted to say in a simple and very objective way. Exactly what I needed." },
+  { nome: "Doce Noite", empresa: "Marca parceira", empresaEn: "Partner brand", logo: 11,
+    texto: "Oiee Mari, tudo bom? 🥰 Só pra te avisar que já saiu 15 cupons dos seus seguidores, estão usando muito 😍",
+    textoEn: "Hi Mari, how are you? 🥰 Just letting you know that 15 coupons from your followers have already been used, they're using it a lot 😍" },
+  { nome: "Tropical", empresa: "Tropical Especiarias", logo: 27, estrelas: 5,
+    texto: "Conteúdo excelente, criativo e muito bem produzido! A UGC entendeu perfeitamente a proposta da marca e entregou um trabalho de ótima qualidade! Ficamos muito satisfeitos com o resultado e recomendamos a parceria.",
+    textoEn: "Excellent, creative and very well produced content! The UGC creator perfectly understood the brand's proposal and delivered top quality work! We were very satisfied with the result and recommend the partnership." }
 ];
+
+/* TEXTOS FIXOS EM INGLÊS
+   O português desses textos fica direto no HTML. Cada elemento com data-t="chave" usa o texto em inglês desta lista. */
+const ingles = {
+  titulo_pagina: "Mariana Lino | UGC Portfolio",
+  descricao_pagina: "Mariana Lino, UGC creator based in Balneário Camboriú, Brazil. Videos that feel like a friend's recommendation for beauty, skincare, fashion, home, motherhood and tech brands.",
+  pular: "Skip to content",
+  menu_aria: "Main menu",
+  menu_sobre: "About", menu_destaques: "Highlights", menu_trabalhos: "Work",
+  menu_servicos: "Services", menu_numeros: "Results", menu_contato: "Contact",
+  trabalhe: "Work with me",
+  capa_oi: "Hi, brand! I'm",
+  capa_frase: "UGC creator who turns your product into <strong>videos that feel like a friend's recommendation</strong>, made to stop the scroll and sell on social media.",
+  capa_falar: "Let's talk",
+  capa_ver: "See my work",
+  capa_foto_alt: "Mariana Lino in a white blazer, hand resting on her cheek, looking at the camera",
+  capa_legenda: "nice to meet you!",
+  marcas_titulo: "brands that trust my work",
+  sobre_foto_alt: "Mariana Lino filming a makeup video, applying lip gloss with her phone on a tripod",
+  sobre_mao: "about me",
+  sobre_titulo: "Nice to meet you, I'm Mari",
+  sobre_p1: "I'm <strong>30</strong>, a <strong>UGC Creator</strong>, a mom of a girl and a boy, and I live in <strong>Balneário Camboriú, on the coast of Santa Catarina, Brazil</strong>.",
+  sobre_p1b: "I bring <strong>10 years of photography experience</strong>, which is where my eye for light, framing and detail comes from: your product shows up the way it deserves.",
+  sobre_p1d: "I also have a <strong>degree in Nutrition</strong>, so I can talk about food, supplements and wellness with knowledge and responsibility.",
+  sobre_p1c: "I've collaborated with <strong>brands from Brazil and abroad</strong>, creating content built for performance: from the hook to the CTA.",
+  sobre_p1e: "As a mom, I test everything in the real routine of my home, and that honesty is what builds a connection with the audience and turns products into must haves.",
+  destaques_titulo: "Featured content",
+  destaques_p: "Three videos that show how I work. Tap a card to watch.",
+  video_legenda: "video cover 9:16",
+  video_contexto: "Brand, niche and the goal of the video in one line.",
+  video1_aria: "Watch video: Alô Casa, over 30 million views",
+  video1_numero: "30M+",
+  video1_contexto: "Home and decor · Building desire for the product.",
+  video2_aria: "Watch video: Pingo de Gente Joias, 10K views",
+  video_janela: "Video",
+  video2_numero: "10K",
+  video3_aria: "Watch video: Riise, over 60 new sign-ups",
+  video1_rotulo: "views", video2_rotulo: "total views", video3_rotulo: "new sign-ups",
+  video1_titulo: "Alô Casa", video2_titulo: "Pingo de Gente Joias", video3_titulo: "Riise",
+  video3_contexto: "Tech · Driving subscription conversions.",
+  video2_contexto: "Motherhood · Moving moms and bringing the brand closer to them in the Mother's Day campaign.",
+  trabalhos_mao: "pick your niche",
+  trabalhos_titulo: "Work by niche",
+  trabalhos_p: "Filter by your brand's world and see what I've created so far.",
+  filtros_aria: "Filter work by niche",
+  servicos_mao: "the menu",
+  servicos_titulo: "How I can help",
+  servicos_p: "From a single video to a full monthly package. Build your order.",
+  numeros_mao: "stamped card",
+  numeros_titulo: "Results and testimonials",
+  caso_intro: "Results don't only come from ads: <strong>well made organic content sells too.</strong>",
+  caso_cta: "I want these results for my brand",
+  case_mao: "real results",
+  depoimentos_titulo: "What brands say",
+  contato_mao: "your next stamp",
+  contato_titulo: "Shall we create together?",
+  contato_p: "Tell me about your brand and your product. I reply within one business day.",
+  label_nome: "Your name",
+  label_email: "Your email",
+  label_mensagem: "Message",
+  mensagem_placeholder: "Brand, product, deadline and what you have in mind for the video",
+  enviar: "Send message",
+  direto_titulo: "Prefer to talk directly?",
+  direto_p: "Pick the channel that's easiest for you.",
+  cidade: "from Balneário Camboriú to the whole world",
+  redes_aria: "My social media",
+  modal_fechar: "Close",
+  modal_mao: "a little gift",
+  modal_titulo: "Want my full media kit?",
+  modal_p: "Leave your name and email and I'll send it with rates, formats and case studies.",
+  kit_botao: "Send it to me"
+};
 
 /* =====================================================================
    A PARTIR DAQUI É O FUNCIONAMENTO DA PÁGINA (não precisa mexer)
@@ -689,39 +950,55 @@ const degrades = {
   moda:        "linear-gradient(150deg,#efe6dc,#b99a86 55%,#6b4a35)",
   casa:        "linear-gradient(150deg,#eef2e8,#a9c1a4 55%,#4f7a54)",
   maternidade: "linear-gradient(150deg,#fbefe8,#eab9a8 55%,#c5533f)",
-  tech:        "linear-gradient(150deg,#e9e6e1,#9c8e84 55%,#4a3224)"
+  tech:        "linear-gradient(150deg,#e9e6e1,#9c8e84 55%,#4a3224)",
+  alimentacao: "linear-gradient(150deg,#f4f1e0,#c9c48a 55%,#7a7a3a)",
+  cuidados:    "linear-gradient(150deg,#eef4f6,#a9c6cf 55%,#4d7480)",
+  financas:    "linear-gradient(150deg,#eef0f6,#a3aacb 55%,#3f4a7a)"
 };
-const nomeNicho = (id) => (nichos.find((n) => n.id === id) || { nome: id }).nome;
+/* Idioma: "pt" ou "en". Vem do link (?lang=en), da última escolha do visitante ou, se nada disso, português. */
+const IDIOMAS = ["pt", "en"];
+function idiomaInicial() {
+  const doLink = new URLSearchParams(location.search).get("lang");
+  if (IDIOMAS.includes(doLink)) return doLink;
+  try { const salvo = localStorage.getItem("idioma"); if (IDIOMAS.includes(salvo)) return salvo; } catch (e) {}
+  return "pt";
+}
+let idioma = idiomaInicial();
+const emIngles = () => idioma === "en";
+/* Pega o campo no idioma atual: tr(item, "titulo") devolve "tituloEn" em inglês, se existir */
+const tr = (obj, campo) => (emIngles() && obj[campo + "En"]) ? obj[campo + "En"] : obj[campo];
+/* Textos gerados pelo script, nos dois idiomas */
+const frases = {
+  todos:        { pt: "Todos", en: "All" },
+  todosNichos:  { pt: "todos os nichos", en: "all niches" },
+  espacoImagem: { pt: "Espaço para a imagem do trabalho", en: "Space for the image of the project for" },
+  parceira:     { pt: "Marca parceira", en: "Partner brand" },
+  abrirMenu:    { pt: "Abrir menu", en: "Open menu" },
+  fecharMenu:   { pt: "Fechar menu", en: "Close menu" },
+  confere:      { pt: "Confere os campos: preencha tudo e use um e-mail válido.", en: "Please check the fields: fill everything in and use a valid email." },
+  assistir:     { pt: "Assistir vídeo", en: "Watch video" }
+};
+const f = (chave) => frases[chave][idioma];
+const contagemTexto = (total, nome) => emIngles()
+  ? `Showing ${total} ${total === 1 ? "project" : "projects"} from ${nome}.`
+  : `Mostrando ${total} ${total === 1 ? "trabalho" : "trabalhos"} de ${nome}.`;
+
+const nomeNicho = (id) => { const n = nichos.find((x) => x.id === id); return n ? tr(n, "nome") : id; };
+const nomeMarca = (m) => (m.nome === "Marca parceira" ? f("parceira") : m.nome);
 
 /* Contador: HTML de um número animável */
 const numeroContador = (m) =>
-  `<strong data-contar="${m.valor}" data-sufixo="${esc(m.sufixo)}">${fmt.format(m.valor)}${esc(m.sufixo)}</strong>`;
+  `<strong data-contar="${m.valor}" data-prefixo="${esc(m.prefixo || "")}" data-sufixo="${esc(m.sufixo)}">${esc(m.prefixo || "")}${fmt.format(m.valor)}${esc(m.sufixo)}</strong>`;
 
-/* Capa: três números */
-$("#capa-numeros").innerHTML = metricas.slice(0, 3)
-  .map((m) => `<div>${numeroContador(m)}<span>${esc(m.rotulo)}</span></div>`).join("");
+/* Esteira de logos: a lista aparece duas vezes seguidas para o movimento não ter emenda.
+   A segunda cópia fica escondida do leitor de tela. */
+const itemMarca = (m, copia) =>
+  `<li${copia ? ' aria-hidden="true"' : ""}><span class="logo-marca" role="img" aria-label="${esc(nomeMarca(m))}" style="background-position:${(m.logo / (TOTAL_LOGOS - 1)) * 100}% 0"></span></li>`;
+$("#esteira").innerHTML = marcas.map((m) => itemMarca(m, false)).join("") + marcas.map((m) => itemMarca(m, true)).join("");
 
-/* Carimbos das marcas, levemente girados */
-const giros = [-8, 6, -3, 11, -12, 4, 9, -6, 2, -10, 7, -4];
-$("#carimbos").innerHTML = marcas
-  .map((m, i) => `<li class="carimbo c${i % 3}" style="--giro:${giros[i % giros.length]}deg">${esc(m)}</li>`).join("");
-
-/* Filtros e galeria */
-$("#filtros").innerHTML =
-  `<button type="button" class="filtro" data-filtro="todos" aria-pressed="true">Todos</button>` +
-  nichos.map((n) => `<button type="button" class="filtro" data-filtro="${n.id}" aria-pressed="false">${esc(n.nome)}</button>`).join("");
-
-$("#galeria").innerHTML = trabalhos.map((t) => {
-  const midia = t.imagem
-    ? `<div class="midia r-4x5"><img src="${esc(t.imagem)}" alt="${esc(t.alt)}" loading="lazy"></div>`
-    : `<div class="midia r-4x5" role="img" aria-label="Espaço para a imagem do trabalho ${esc(t.marca)}" data-legenda="${esc(t.formato.toLowerCase())} 4:5" style="background:${degrades[t.nicho] || ""}"></div>`;
-  return `<li class="trabalho cartao" data-nicho="${t.nicho}">${midia}
-    <span class="etiqueta">${esc(nomeNicho(t.nicho))}</span>
-    <h3>${esc(t.titulo)}</h3>
-    <p>${esc(t.marca)} · ${esc(t.formato)}</p></li>`;
-}).join("");
-
+let filtroAtual = "todos";
 function filtrar(filtro) {
+  filtroAtual = filtro;
   let total = 0;
   document.querySelectorAll(".filtro").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.filtro === filtro)));
   document.querySelectorAll(".trabalho").forEach((item) => {
@@ -729,32 +1006,106 @@ function filtrar(filtro) {
     item.hidden = !mostra;
     if (mostra) total++;
   });
-  const nome = filtro === "todos" ? "todos os nichos" : nomeNicho(filtro);
-  $("#contagem").textContent = `Mostrando ${total} ${total === 1 ? "trabalho" : "trabalhos"} de ${nome}.`;
+  $("#contagem").textContent = contagemTexto(total, filtro === "todos" ? f("todosNichos") : nomeNicho(filtro));
 }
 $("#filtros").addEventListener("click", (e) => {
   const botao = e.target.closest(".filtro");
   if (botao) filtrar(botao.dataset.filtro);
 });
-filtrar("todos");
 
-/* Serviços */
-$("#lista-servicos").innerHTML = servicos.map((s, i) =>
-  `<li class="servico cartao revelar"><span class="servico-num" aria-hidden="true">${String(i + 1).padStart(2, "0")}</span>
-   <h3><span class="sr-only">${i + 1}. </span>${esc(s.titulo)}</h3><p>${esc(s.descricao)}</p></li>`).join("");
+/* Monta todas as listas no idioma atual */
+function montarListas() {
+  $("#capa-numeros").innerHTML = metricas.slice(0, 3)
+    .map((m) => `<div>${numeroContador(m)}<span>${esc(tr(m, "rotulo"))}</span></div>`).join("");
 
-/* Métricas, resultados e depoimentos */
-$("#lista-metricas").innerHTML = metricas.map((m) =>
-  `<li class="metrica cartao revelar">${numeroContador(m)}<span>${esc(m.rotulo)}</span></li>`).join("");
+  document.querySelectorAll("#esteira .logo-marca").forEach((el, i) =>
+    el.setAttribute("aria-label", nomeMarca(marcas[i % marcas.length])));
 
-$("#lista-resultados").innerHTML = resultados.map((r) =>
-  `<li class="resultado cartao picote revelar"><strong>${esc(r.numero)}</strong><span class="rotulo">${esc(r.rotulo)}</span>
-   <p>${esc(r.texto)}</p><span class="marca">${esc(r.marca)}</span></li>`).join("");
+  $("#filtros").innerHTML =
+    `<button type="button" class="filtro" data-filtro="todos" aria-pressed="true">${f("todos")}</button>` +
+    nichos.map((n) => `<button type="button" class="filtro" data-filtro="${n.id}" aria-pressed="false">${esc(tr(n, "nome"))}</button>`).join("");
 
-$("#lista-depoimentos").innerHTML = depoimentos.map((d) =>
-  `<li><figure class="depoimento cartao revelar"><blockquote><p style="margin:0">${esc(d.texto)}</p></blockquote>
-   <figcaption><span class="avatar" aria-hidden="true">${esc(d.nome.charAt(0))}</span>
-   <span><cite>${esc(d.nome)}</cite><span class="empresa">${esc(d.empresa)}</span></span></figcaption></figure></li>`).join("");
+  const ordemNichos = nichos.map((n) => n.id);
+  const trabalhosOrdenados = [...trabalhos].sort((a, b) => ordemNichos.indexOf(a.nicho) - ordemNichos.indexOf(b.nicho));
+  $("#galeria").innerHTML = trabalhosOrdenados.map((t) => {
+    if (t.youtube) {
+      const nome = tr(t, "titulo");
+      return `<li class="trabalho cartao" data-nicho="${t.nicho}">
+        <a class="video-card video-galeria" data-youtube="${esc(t.youtube)}"${t.capa ? ` data-capa="${esc(t.capa)}"` : ""} href="https://youtube.com/shorts/${esc(t.youtube)}" target="_blank" rel="noopener" aria-label="${f("assistir")}: ${esc(nome)}">
+          <div class="midia r-9x16"><span class="play" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 4l14 8-14 8z"/></svg></span></div>
+          <span class="etiqueta">${esc(nomeNicho(t.nicho))}</span>
+          <h3>${esc(nome)}</h3>
+          <p>${esc(tr(t, "formato"))}</p>
+        </a></li>`;
+    }
+    const midia = t.imagem
+      ? `<div class="midia r-4x5"><img src="${esc(t.imagem)}" alt="${esc(tr(t, "alt"))}" loading="lazy"></div>`
+      : `<div class="midia r-4x5" role="img" aria-label="${f("espacoImagem")} ${esc(t.marca)}" data-legenda="${esc(tr(t, "formato").toLowerCase())} 4:5" style="background:${degrades[t.nicho] || ""}"></div>`;
+    return `<li class="trabalho cartao" data-nicho="${t.nicho}">${midia}
+      <span class="etiqueta">${esc(nomeNicho(t.nicho))}</span>
+      <h3>${esc(tr(t, "titulo"))}</h3>
+      <p>${esc(t.marca)} · ${esc(tr(t, "formato"))}</p></li>`;
+  }).join("");
+  filtrar(filtroAtual);
+
+  $("#lista-servicos").innerHTML = servicos.map((s, i) =>
+    `<li class="servico cartao revelar"><span class="servico-num" aria-hidden="true">${String(i + 1).padStart(2, "0")}</span>
+     <h3><span class="sr-only">${i + 1}. </span>${esc(tr(s, "titulo"))}</h3><p>${esc(tr(s, "descricao"))}</p></li>`).join("");
+
+  $("#lista-metricas").innerHTML = metricas.map((m) =>
+    `<li class="metrica cartao revelar">${numeroContador(m)}<span>${esc(tr(m, "rotulo"))}</span></li>`).join("");
+
+  $("#lista-cases").innerHTML = cases.map((c) => {
+    const contexto = (emIngles() && c.contextoEn ? c.contextoEn : c.contexto).map((t) => `<li>${esc(t)}</li>`).join("");
+    const numeros = (c.numeros || []).map((n) => `<li><strong>${esc(n.valor)}</strong><span>${esc(tr(n, "rotulo"))}</span></li>`).join("");
+    return `<li class="caso cartao revelar">
+      <div class="caso-texto">
+        <p class="caso-marca">${c.logo ? `<img class="caso-logo" src="${esc(c.logo)}" alt="${esc(c.marca)}" width="200" height="200" loading="lazy">` : `<span>${esc(c.marca)}</span>`}</p>
+        <p class="caso-destaque"><strong>${esc(c.destaque)}</strong><span>${esc(tr(c, "destaqueRotulo"))}</span></p>
+        <ul class="caso-contexto">${contexto}</ul>
+        ${numeros ? `<ul class="caso-numeros">${numeros}</ul>` : ""}
+        <p class="caso-fechamento">${esc(tr(c, "fechamento"))}</p>
+      </div>
+      <img class="caso-print" src="${esc(c.imagem)}" alt="${esc(tr(c, "alt"))}" width="575" height="900" loading="lazy">
+    </li>`;
+  }).join("");
+
+  $("#lista-depoimentos").innerHTML = depoimentos.map((d) => {
+    const avatar = (d.logo !== undefined && d.logo !== null)
+      ? `<span class="avatar avatar-logo" aria-hidden="true"><span class="logo-marca" style="background-position:${(d.logo / (TOTAL_LOGOS - 1)) * 100}% 0"></span></span>`
+      : `<span class="avatar" aria-hidden="true">${esc(d.nome.charAt(0))}</span>`;
+    const estrelas = d.estrelas ? `<p class="estrelas" aria-label="${d.estrelas} ${emIngles() ? "stars" : "estrelas"}">${"★".repeat(d.estrelas)}</p>` : "";
+    return `<li><figure class="depoimento cartao revelar">${estrelas}<blockquote><p style="margin:0">${esc(tr(d, "texto"))}</p></blockquote>
+     <figcaption>${avatar}
+     <span><cite>${esc(d.nome)}</cite><span class="empresa">${esc(tr(d, "empresa"))}</span></span></figcaption></figure></li>`;
+  }).join("");
+}
+
+/* Textos fixos do HTML: guarda o português e troca pelo inglês quando preciso */
+const ATRIBUTOS = [["data-t-aria", "aria-label"], ["data-t-alt", "alt"], ["data-t-placeholder", "placeholder"], ["data-t-legenda", "data-legenda"]];
+document.querySelectorAll("[data-t]").forEach((el) => { el.dataset.pt = el.innerHTML; });
+ATRIBUTOS.forEach(([marca, attr]) => document.querySelectorAll(`[${marca}]`).forEach((el) => { el.setAttribute(`data-pt-${attr}`, el.getAttribute(attr) || ""); }));
+const tituloPt = document.title;
+const metaDescricao = document.querySelector('meta[name="description"]');
+const descricaoPt = metaDescricao.content;
+
+function aplicarTextosFixos() {
+  document.documentElement.lang = emIngles() ? "en" : "pt-BR";
+  document.title = emIngles() ? ingles.titulo_pagina : tituloPt;
+  metaDescricao.content = emIngles() ? ingles.descricao_pagina : descricaoPt;
+  document.querySelectorAll("[data-t]").forEach((el) => {
+    const en = ingles[el.dataset.t];
+    el.innerHTML = emIngles() && en ? en : el.dataset.pt;
+  });
+  ATRIBUTOS.forEach(([marca, attr]) => document.querySelectorAll(`[${marca}]`).forEach((el) => {
+    const en = ingles[el.getAttribute(marca)];
+    el.setAttribute(attr, emIngles() && en ? en : el.getAttribute(`data-pt-${attr}`));
+  }));
+  document.querySelectorAll("[data-idioma]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.idioma === idioma)));
+}
+
+aplicarTextosFixos();
+montarListas();
 
 /* Menu sanduíche */
 const menuBotao = $(".menu-botao");
@@ -762,13 +1113,13 @@ const menu = $("#menu");
 function fecharMenu() {
   menu.classList.remove("aberto");
   menuBotao.setAttribute("aria-expanded", "false");
-  menuBotao.setAttribute("aria-label", "Abrir menu");
+  menuBotao.setAttribute("aria-label", f("abrirMenu"));
 }
 menuBotao.addEventListener("click", () => {
   const abrir = !menu.classList.contains("aberto");
   menu.classList.toggle("aberto", abrir);
   menuBotao.setAttribute("aria-expanded", String(abrir));
-  menuBotao.setAttribute("aria-label", abrir ? "Fechar menu" : "Abrir menu");
+  menuBotao.setAttribute("aria-label", abrir ? f("fecharMenu") : f("abrirMenu"));
 });
 menu.addEventListener("click", (e) => { if (e.target.closest("a")) fecharMenu(); });
 
@@ -776,13 +1127,14 @@ menu.addEventListener("click", (e) => { if (e.target.closest("a")) fecharMenu();
 function animarContador(el) {
   const alvo = Number(el.dataset.contar);
   const sufixo = el.dataset.sufixo || "";
-  if (semMovimento) { el.textContent = fmt.format(alvo) + sufixo; return; }
+  const prefixo = el.dataset.prefixo || "";
+  if (semMovimento) { el.textContent = prefixo + fmt.format(alvo) + sufixo; return; }
   const duracao = 1600;
   const inicio = performance.now();
   function passo(agora) {
-    const p = Math.min((agora - inicio) / duracao, 1);
+    const p = Math.min(Math.max((agora - inicio) / duracao, 0), 1);
     const suave = 1 - Math.pow(1 - p, 3);
-    el.textContent = fmt.format(Math.round(alvo * suave)) + sufixo;
+    el.textContent = prefixo + fmt.format(Math.round(alvo * suave)) + sufixo;
     if (p < 1) requestAnimationFrame(passo);
   }
   requestAnimationFrame(passo);
@@ -805,7 +1157,7 @@ if ("IntersectionObserver" in window) {
     });
   }, { threshold: 0.5 });
   contadores.forEach((el) => {
-    if (!semMovimento) el.textContent = "0" + (el.dataset.sufixo || "");
+    if (!semMovimento) el.textContent = (el.dataset.prefixo || "") + "0" + (el.dataset.sufixo || "");
     obsContar.observe(el);
   });
 } else {
@@ -818,7 +1170,7 @@ function ligarFormulario(form, caixa, mensagem) {
     evento.preventDefault();
     if (!form.checkValidity()) {
       const invalido = form.querySelector(":invalid");
-      caixa.textContent = "Confere os campos: preencha tudo e use um e-mail válido.";
+      caixa.textContent = f("confere");
       caixa.classList.add("visivel");
       if (invalido) invalido.focus();
       return;
@@ -831,9 +1183,13 @@ function ligarFormulario(form, caixa, mensagem) {
   });
 }
 ligarFormulario($("#form-contato"), $("#confirmacao-contato"),
-  (nome) => `Obrigada, ${nome}! Sua mensagem chegou por aqui. Eu te respondo em até um dia útil.`);
+  (nome) => emIngles()
+    ? `Thank you, ${nome}! Your message is here. I'll reply within one business day.`
+    : `Obrigada, ${nome}! Sua mensagem chegou por aqui. Eu te respondo em até um dia útil.`);
 ligarFormulario($("#form-kit"), $("#confirmacao-kit"),
-  (nome) => `Prontinho, ${nome}! Em breve o mídia kit chega no seu e-mail.`);
+  (nome) => emIngles()
+    ? `All set, ${nome}! The media kit will reach your inbox soon.`
+    : `Prontinho, ${nome}! Em breve o mídia kit chega no seu e-mail.`);
 
 /* Card de captura: abre após 7 segundos, uma vez por visita */
 const fundo = $("#modal-fundo");
@@ -869,6 +1225,124 @@ document.addEventListener("keydown", (e) => {
   }
 });
 if (!lerSessao()) setTimeout(abrirModal, 7000);
+
+menuBotao.setAttribute("aria-label", f("abrirMenu"));
+
+/* Destaques do YouTube (cards com data-youtube):
+   a capa vem do YouTube, a prévia toca sem som ao passar o mouse (no celular, quando o card aparece na tela)
+   e o clique abre o vídeo completo, com som, numa janela no próprio site. */
+const YT = "https://www.youtube-nocookie.com/embed/";
+const urlPrevia = (id) => `${YT}${id}?autoplay=1&mute=1&loop=1&playlist=${id}&controls=0&modestbranding=1&rel=0&playsinline=1&disablekb=1&iv_load_policy=3`;
+const urlCompleto = (id) => `${YT}${id}?autoplay=1&controls=1&modestbranding=1&rel=0&playsinline=1`;
+const todosCardsVideo = () => document.querySelectorAll(".video-card[data-youtube]");
+
+function prepararCapa(card) {
+  const id = card.dataset.youtube;
+  const midia = card.querySelector(".midia");
+  midia.classList.add("com-video");
+  if (!midia.querySelector("img")) {
+    const capa = document.createElement("img");
+    capa.className = "capa-yt";
+    capa.alt = "";
+    capa.loading = "lazy";
+    /* Capa em pé dos Shorts. data-capa escolhe a opção de capa do YouTube Studio: "oar1", "oar2" (padrão) ou "oar3".
+       Se não existir, usa a capa deitada do YouTube */
+    const escolhida = card.dataset.capa || "oar2";
+    const capas = [`https://i.ytimg.com/vi/${id}/${escolhida}.jpg`, `https://i.ytimg.com/vi/${id}/oar2.jpg`, `https://i.ytimg.com/vi/${id}/oardefault.jpg`, `https://i.ytimg.com/vi/${id}/oar1.jpg`, `https://i.ytimg.com/vi/${id}/maxresdefault.jpg`, `https://i.ytimg.com/vi/${id}/hqdefault.jpg`];
+    let tentativa = 0;
+    capa.src = capas[0];
+    const proxima = () => { if (tentativa < capas.length - 1) capa.src = capas[++tentativa]; };
+    capa.addEventListener("error", proxima);
+    capa.addEventListener("load", () => { if (capa.naturalWidth < 200) proxima(); });
+    midia.prepend(capa);
+  }
+}
+
+function tocarPrevia(card) {
+  if (semMovimento || card.classList.contains("tocando")) return;
+  const midia = card.querySelector(".midia");
+  const previa = document.createElement("iframe");
+  previa.className = "previa-yt";
+  previa.src = urlPrevia(card.dataset.youtube);
+  previa.title = "";
+  previa.setAttribute("tabindex", "-1");
+  previa.setAttribute("aria-hidden", "true");
+  previa.allow = "autoplay; encrypted-media";
+  previa.addEventListener("load", () => setTimeout(() => previa.classList.add("pronta"), 600));
+  midia.appendChild(previa);
+  card.classList.add("tocando");
+}
+function pararPrevia(card) {
+  const previa = card.querySelector(".previa-yt");
+  if (previa) previa.remove();
+  card.classList.remove("tocando");
+}
+
+const temMouse = window.matchMedia("(hover: hover)").matches;
+/* No celular: toca a prévia do card que está bem visível na tela, um de cada vez */
+const obsVideo = (!temMouse && "IntersectionObserver" in window) ? new IntersectionObserver((entradas) => {
+  entradas.forEach((en) => {
+    if (en.isIntersecting && en.target.offsetParent !== null) {
+      todosCardsVideo().forEach((c) => { if (c !== en.target) pararPrevia(c); });
+      tocarPrevia(en.target);
+    } else {
+      pararPrevia(en.target);
+    }
+  });
+}, { threshold: 0.75 }) : null;
+
+/* Liga capa, prévia e clique em todos os cards de vídeo ainda não preparados (destaques e galeria) */
+function prepararVideos() {
+  todosCardsVideo().forEach((card) => {
+    if (card.dataset.pronto) return;
+    card.dataset.pronto = "1";
+    prepararCapa(card);
+    if (temMouse) {
+      card.addEventListener("mouseenter", () => tocarPrevia(card));
+      card.addEventListener("mouseleave", () => pararPrevia(card));
+    } else if (obsVideo) {
+      obsVideo.observe(card);
+    }
+    card.addEventListener("click", (e) => { e.preventDefault(); abrirVideo(card.dataset.youtube); });
+  });
+}
+
+/* Janela com o vídeo completo */
+const videoModal = $("#video-modal");
+const videoPlayer = $("#video-player");
+let focoAntesVideo = null;
+function abrirVideo(id) {
+  focoAntesVideo = document.activeElement;
+  todosCardsVideo().forEach(pararPrevia);
+  videoPlayer.innerHTML = `<iframe src="${urlCompleto(id)}" title="${emIngles() ? "Video" : "Vídeo"}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
+  videoModal.hidden = false;
+  $("#video-fechar").focus();
+}
+function fecharVideo() {
+  videoModal.hidden = true;
+  videoPlayer.innerHTML = "";
+  if (focoAntesVideo && focoAntesVideo.focus) focoAntesVideo.focus();
+}
+prepararVideos();
+$("#video-fechar").addEventListener("click", fecharVideo);
+videoModal.addEventListener("click", (e) => { if (e.target === videoModal) fecharVideo(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !videoModal.hidden) fecharVideo(); });
+
+/* Troca de idioma pelos botões PT | EN, sem recarregar a página */
+document.querySelector(".idioma").addEventListener("click", (e) => {
+  const botao = e.target.closest("[data-idioma]");
+  if (!botao || botao.dataset.idioma === idioma) return;
+  idioma = botao.dataset.idioma;
+  try { localStorage.setItem("idioma", idioma); } catch (err) {}
+  aplicarTextosFixos();
+  montarListas();
+  prepararVideos();
+  /* As listas novas já aparecem prontas, com os números no valor final */
+  document.querySelectorAll(".revelar").forEach((el) => el.classList.add("visivel"));
+  document.querySelectorAll("[data-contar]").forEach((el) => { el.textContent = (el.dataset.prefixo || "") + fmt.format(Number(el.dataset.contar)) + (el.dataset.sufixo || ""); });
+  menuBotao.setAttribute("aria-label", menu.classList.contains("aberto") ? f("fecharMenu") : f("abrirMenu"));
+  document.querySelectorAll(".confirmacao").forEach((c) => { c.classList.remove("visivel"); c.textContent = ""; });
+});
 
 /* Ano automático no rodapé */
 $("#ano").textContent = new Date().getFullYear();
