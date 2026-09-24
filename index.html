@@ -239,39 +239,45 @@
   .video-card h3{font-size:1.2rem;margin-bottom:6px}
   .video-card p{color:var(--tinta-suave);margin:0;font-size:.98rem}
   @media (max-width: 760px){
-    .destaques{grid-template-columns:1fr;max-width:380px;margin:0 auto}
+    /* No celular os destaques deslizam para o lado */
+    .destaques{display:flex;gap:16px;overflow-x:auto;scroll-snap-type:x mandatory;margin:0 -20px;padding:4px 20px 16px;scroll-padding-left:20px;scrollbar-width:thin}
+    .destaques .video-card{flex:0 0 74%;scroll-snap-align:start}
+    .destaques .video-numero{font-size:2rem}
   }
 
   /* ================= TRABALHOS ================= */
-  .filtros{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:30px}
+  /* Atalhos de nicho no topo: levam até a linha do nicho */
+  .filtros{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:34px}
   .filtro{
-    min-height:44px;padding:.55em 1.1em;border-radius:999px;border:2px dashed var(--tracejado);background:var(--papel);
-    font:600 .95rem var(--corpo);color:var(--cafe);cursor:pointer;transition:background-color .2s, color .2s;
+    display:inline-flex;align-items:center;min-height:44px;padding:.55em 1.1em;border-radius:999px;border:2px dashed var(--tracejado);background:var(--papel);
+    font:600 .95rem var(--corpo);color:var(--cafe);text-decoration:none;cursor:pointer;transition:background-color .2s, color .2s;
   }
-  .filtro:hover{background:var(--creme-escuro)}
-  .filtro[aria-pressed="true"]{background:var(--cafe);color:#fff;border-style:solid;border-color:var(--cafe)}
-  .galeria{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:22px}
-  .trabalho{padding:10px 10px 16px;animation:surgir .35s ease both}
-  .trabalho[hidden]{display:none}
-  /* Trabalho em vídeo na galeria: mesmo card, com capa, prévia e vídeo que abre no site */
+  .filtro:hover{background:var(--cafe);color:#fff;border-style:solid;border-color:var(--cafe)}
+  /* Cada nicho é uma linha que desliza para o lado, como no portfólio de referência */
+  .linha-nicho{margin-bottom:38px;scroll-margin-top:90px}
+  .linha-topo{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+  .linha-topo h3{font-size:1.35rem;margin:0}
+  .linha-contagem{font-family:var(--mao);font-size:1.25rem;color:var(--vermelho-escuro)}
+  .linha-cards{list-style:none;margin:0 -20px;padding:4px 20px 14px;display:flex;gap:16px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding-left:20px;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:var(--tracejado) transparent}
+  .linha-cards::-webkit-scrollbar{height:6px}
+  .linha-cards::-webkit-scrollbar-thumb{background:var(--tracejado);border-radius:6px}
+  .trabalho{flex:0 0 clamp(150px,40vw,210px);scroll-snap-align:start;padding:8px 8px 12px}
+  /* Trabalho em vídeo: mesmo card dos destaques, com capa, prévia e vídeo que abre no site */
   .trabalho .video-galeria{display:block;padding:0;text-decoration:none;color:inherit}
   .trabalho .video-galeria:hover{transform:none;box-shadow:none}
-  .trabalho .video-galeria .midia{margin-bottom:14px}
-  @media (max-width: 560px){
-    .galeria{grid-template-columns:repeat(2,1fr);gap:12px}
-    .trabalho{padding:6px 6px 12px}
-    .trabalho h3{font-size:.95rem;margin:0 4px 2px}
-    .trabalho p{font-size:.8rem;margin:0 4px}
-    .trabalho .etiqueta{font-size:.65rem;margin-left:4px;padding:1px 8px}
-    .trabalho .play{width:52px;height:52px}
-    .trabalho .play svg{width:20px;height:20px}
-  }
-  .trabalho .midia{margin-bottom:14px}
+  .trabalho .midia{margin-bottom:10px}
+  .trabalho h3{font-size:1rem;margin:0 4px 2px}
+  .trabalho p{margin:0 4px;font-size:.85rem;color:var(--tinta-suave)}
+  .trabalho .play{width:52px;height:52px}
+  .trabalho .play svg{width:20px;height:20px}
   .etiqueta{display:inline-block;font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--verde-escuro);border:1.5px dashed var(--verde);border-radius:999px;padding:2px 10px;margin-bottom:8px}
-  .trabalho h3{font-size:1.08rem;margin:0 6px 4px}
-  .trabalho .etiqueta{margin-left:6px}
-  .trabalho p{margin:0 6px;font-size:.92rem;color:var(--tinta-suave)}
-  .contagem{margin:18px 0 0;font-size:.95rem;color:var(--tinta-suave)}
+  .contagem{margin:-18px 0 26px;font-size:.95rem;color:var(--tinta-suave)}
+  @media (min-width: 761px){ .contagem{display:none} }
+  @media (max-width: 760px){
+    .filtros{flex-wrap:nowrap;overflow-x:auto;margin:0 -20px 24px;padding:2px 20px 8px;scrollbar-width:none}
+    .filtros::-webkit-scrollbar{display:none}
+    .filtro{flex:none;min-height:40px;font-size:.9rem}
+  }
   @keyframes surgir{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 
   /* ================= SERVIÇOS ================= */
@@ -285,7 +291,15 @@
   .servico h3{font-size:1.25rem;margin-bottom:8px}
   .servico p{margin:0;color:var(--tinta-suave)}
   @media (max-width: 900px){ .servicos{grid-template-columns:repeat(2,1fr)} }
-  @media (max-width: 580px){ .servicos{grid-template-columns:1fr} }
+  @media (max-width: 580px){
+    .servicos{grid-template-columns:1fr;gap:14px}
+    .servico{padding:20px;display:grid;grid-template-columns:auto 1fr;column-gap:14px;align-items:start}
+    .servico-num{grid-row:span 2;margin:0;width:46px;height:46px;font-size:1.4rem}
+    .servico h3{font-size:1.1rem;margin-bottom:4px}
+    .servico p{font-size:.95rem}
+    .metricas{gap:12px}
+    .metrica{padding:18px 12px}
+  }
 
   /* ================= NÚMEROS E DEPOIMENTOS ================= */
   .metricas{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
@@ -330,6 +344,14 @@
     .caso-numeros{grid-template-columns:repeat(2,1fr)}
     .depoimentos{grid-template-columns:1fr}
   }
+  @media (max-width: 760px){
+    /* No celular os depoimentos deslizam para o lado */
+    .depoimentos{display:flex;gap:16px;overflow-x:auto;scroll-snap-type:x mandatory;margin:0 -20px;padding:4px 20px 16px;scroll-padding-left:20px;scrollbar-width:thin}
+    .depoimentos > li{flex:0 0 86%;scroll-snap-align:start;display:flex}
+    .depoimentos > li > .depoimento{width:100%}
+    .depoimento{padding:22px 20px 18px}
+    .depoimento blockquote{font-size:1rem}
+  }
 
   /* ================= CONTATO ================= */
   .contato-grade{display:grid;grid-template-columns:1.2fr .8fr;gap:32px;align-items:start}
@@ -365,16 +387,8 @@
   .redes a:hover{background:var(--creme-escuro)}
   .rodape small{color:var(--tinta-suave);font-size:.9rem}
 
-  /* ================= CARD DE CAPTURA ================= */
-  .modal-fundo{position:fixed;inset:0;z-index:300;background:rgba(42,28,20,.62);display:grid;place-items:center;padding:20px}
-  .modal-fundo[hidden]{display:none}
-  .modal{width:100%;max-width:430px;padding:34px 30px 30px;animation:surgir .3s ease both;max-height:calc(100vh - 40px);overflow:auto}
   .modal-fechar{position:absolute;top:10px;right:10px;width:44px;height:44px;border-radius:50%;border:2px dashed var(--tracejado);background:var(--papel);cursor:pointer;font-size:1.4rem;line-height:1;color:var(--cafe)}
   .modal-fechar:hover{background:var(--creme-escuro)}
-  .modal .mao{font-size:1.6rem;color:var(--vermelho-escuro);display:block;transform:rotate(-2deg)}
-  .modal h2{font-size:1.75rem;margin:2px 0 10px;padding-right:30px}
-  .modal p{color:var(--tinta-suave)}
-  .modal .botao{width:100%}
 
   /* ================= ANIMAÇÃO DE ENTRADA ================= */
   .js .revelar{opacity:0;transform:translateY(26px);transition:opacity .7s ease, transform .7s ease}
@@ -547,11 +561,12 @@
       <div class="cabeca revelar">
         <span class="mao" data-t="trabalhos_mao">escolha o seu nicho</span>
         <h2 id="titulo-trabalhos" data-t="trabalhos_titulo">Trabalhos por nicho</h2>
-        <p data-t="trabalhos_p">Filtre pelo universo da sua marca e veja o que eu já criei por aí.</p>
+        <p data-t="trabalhos_p">Escolha o universo da sua marca e veja o que eu já criei por aí.</p>
       </div>
-      <div class="filtros" id="filtros" role="group" aria-label="Filtrar trabalhos por nicho" data-t-aria="filtros_aria"></div>
-      <ul class="galeria" id="galeria"></ul>
-      <p class="contagem" id="contagem" aria-live="polite"></p>
+      <nav class="filtros" id="filtros" aria-label="Ir para o nicho" data-t-aria="filtros_aria"></nav>
+      <p class="contagem" data-t="deslize">Deslize para o lado para ver mais vídeos de cada nicho →</p>
+      <!-- Cada nicho vira uma linha; os vídeos vêm do array "trabalhos" no script -->
+      <div id="galeria"></div>
     </div>
   </section>
 
@@ -662,28 +677,6 @@
   </div>
 </div>
 
-<!-- ================= CARD DE CAPTURA (aparece após 7 segundos, uma vez por visita) ================= -->
-<div class="modal-fundo" id="modal-fundo" hidden>
-  <div class="modal cartao picote" role="dialog" aria-modal="true" aria-labelledby="titulo-modal">
-    <button class="modal-fechar" type="button" id="modal-fechar" aria-label="Fechar" data-t-aria="modal_fechar">&times;</button>
-    <span class="mao" data-t="modal_mao">presentinho</span>
-    <h2 id="titulo-modal" data-t="modal_titulo">Quer meu mídia kit completo?</h2>
-    <p data-t="modal_p">Deixa seu nome e e-mail que eu te mando com valores, formatos e cases.</p>
-    <!-- Igual ao formulário de contato: para receber os dados, ligue este form ao Formspree ou similar. -->
-    <form id="form-kit" novalidate>
-      <div class="campo">
-        <label for="kit-nome" data-t="label_nome">Seu nome</label>
-        <input id="kit-nome" name="nome" type="text" autocomplete="name" required>
-      </div>
-      <div class="campo">
-        <label for="kit-email" data-t="label_email">Seu e-mail</label>
-        <input id="kit-email" name="email" type="email" autocomplete="email" required>
-      </div>
-      <button class="botao botao-principal" type="submit" data-t="kit_botao">Quero receber</button>
-      <p class="confirmacao" id="confirmacao-kit" role="status" tabindex="-1"></p>
-    </form>
-  </div>
-</div>
 
 <script>
 /* =====================================================================
@@ -902,8 +895,9 @@ const ingles = {
   video2_contexto: "Motherhood · Moving moms and bringing the brand closer to them in the Mother's Day campaign.",
   trabalhos_mao: "pick your niche",
   trabalhos_titulo: "Work by niche",
-  trabalhos_p: "Filter by your brand's world and see what I've created so far.",
-  filtros_aria: "Filter work by niche",
+  trabalhos_p: "Pick your brand's world and see what I've created so far.",
+  deslize: "Swipe sideways to see more videos in each niche →",
+  filtros_aria: "Go to niche",
   servicos_mao: "the menu",
   servicos_titulo: "How I can help",
   servicos_p: "From a single video to a full monthly package. Build your order.",
@@ -925,11 +919,7 @@ const ingles = {
   direto_p: "Pick the channel that's easiest for you.",
   cidade: "from Balneário Camboriú to the whole world",
   redes_aria: "My social media",
-  modal_fechar: "Close",
-  modal_mao: "a little gift",
-  modal_titulo: "Want my full media kit?",
-  modal_p: "Leave your name and email and I'll send it with rates, formats and case studies.",
-  kit_botao: "Send it to me"
+  modal_fechar: "Close"
 };
 
 /* =====================================================================
@@ -967,8 +957,6 @@ const emIngles = () => idioma === "en";
 const tr = (obj, campo) => (emIngles() && obj[campo + "En"]) ? obj[campo + "En"] : obj[campo];
 /* Textos gerados pelo script, nos dois idiomas */
 const frases = {
-  todos:        { pt: "Todos", en: "All" },
-  todosNichos:  { pt: "todos os nichos", en: "all niches" },
   espacoImagem: { pt: "Espaço para a imagem do trabalho", en: "Space for the image of the project for" },
   parceira:     { pt: "Marca parceira", en: "Partner brand" },
   abrirMenu:    { pt: "Abrir menu", en: "Open menu" },
@@ -977,9 +965,6 @@ const frases = {
   assistir:     { pt: "Assistir vídeo", en: "Watch video" }
 };
 const f = (chave) => frases[chave][idioma];
-const contagemTexto = (total, nome) => emIngles()
-  ? `Showing ${total} ${total === 1 ? "project" : "projects"} from ${nome}.`
-  : `Mostrando ${total} ${total === 1 ? "trabalho" : "trabalhos"} de ${nome}.`;
 
 const nomeNicho = (id) => { const n = nichos.find((x) => x.id === id); return n ? tr(n, "nome") : id; };
 const nomeMarca = (m) => (m.nome === "Marca parceira" ? f("parceira") : m.nome);
@@ -994,22 +979,6 @@ const itemMarca = (m, copia) =>
   `<li${copia ? ' aria-hidden="true"' : ""}><span class="logo-marca" role="img" aria-label="${esc(nomeMarca(m))}" style="background-position:${(m.logo / (TOTAL_LOGOS - 1)) * 100}% 0"></span></li>`;
 $("#esteira").innerHTML = marcas.map((m) => itemMarca(m, false)).join("") + marcas.map((m) => itemMarca(m, true)).join("");
 
-let filtroAtual = "todos";
-function filtrar(filtro) {
-  filtroAtual = filtro;
-  let total = 0;
-  document.querySelectorAll(".filtro").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.filtro === filtro)));
-  document.querySelectorAll(".trabalho").forEach((item) => {
-    const mostra = filtro === "todos" || item.dataset.nicho === filtro;
-    item.hidden = !mostra;
-    if (mostra) total++;
-  });
-  $("#contagem").textContent = contagemTexto(total, filtro === "todos" ? f("todosNichos") : nomeNicho(filtro));
-}
-$("#filtros").addEventListener("click", (e) => {
-  const botao = e.target.closest(".filtro");
-  if (botao) filtrar(botao.dataset.filtro);
-});
 
 /* Monta todas as listas no idioma atual */
 function montarListas() {
@@ -1019,19 +988,18 @@ function montarListas() {
   document.querySelectorAll("#esteira .logo-marca").forEach((el, i) =>
     el.setAttribute("aria-label", nomeMarca(marcas[i % marcas.length])));
 
-  $("#filtros").innerHTML =
-    `<button type="button" class="filtro" data-filtro="todos" aria-pressed="true">${f("todos")}</button>` +
-    nichos.map((n) => `<button type="button" class="filtro" data-filtro="${n.id}" aria-pressed="false">${esc(tr(n, "nome"))}</button>`).join("");
+  /* Atalhos de nicho: cada um leva até a linha daquele nicho */
+  const nichosComTrabalho = nichos.filter((n) => trabalhos.some((t) => t.nicho === n.id));
+  $("#filtros").innerHTML = nichosComTrabalho
+    .map((n) => `<a class="filtro" href="#nicho-${n.id}">${esc(tr(n, "nome"))}</a>`).join("");
 
-  const ordemNichos = nichos.map((n) => n.id);
-  const trabalhosOrdenados = [...trabalhos].sort((a, b) => ordemNichos.indexOf(a.nicho) - ordemNichos.indexOf(b.nicho));
-  $("#galeria").innerHTML = trabalhosOrdenados.map((t) => {
+  /* Um card de trabalho (vídeo do YouTube ou imagem) */
+  const cardTrabalho = (t) => {
     if (t.youtube) {
       const nome = tr(t, "titulo");
       return `<li class="trabalho cartao" data-nicho="${t.nicho}">
         <a class="video-card video-galeria" data-youtube="${esc(t.youtube)}"${t.capa ? ` data-capa="${esc(t.capa)}"` : ""} href="https://youtube.com/shorts/${esc(t.youtube)}" target="_blank" rel="noopener" aria-label="${f("assistir")}: ${esc(nome)}">
           <div class="midia r-9x16"><span class="play" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 4l14 8-14 8z"/></svg></span></div>
-          <span class="etiqueta">${esc(nomeNicho(t.nicho))}</span>
           <h3>${esc(nome)}</h3>
           <p>${esc(tr(t, "formato"))}</p>
         </a></li>`;
@@ -1040,11 +1008,20 @@ function montarListas() {
       ? `<div class="midia r-4x5"><img src="${esc(t.imagem)}" alt="${esc(tr(t, "alt"))}" loading="lazy"></div>`
       : `<div class="midia r-4x5" role="img" aria-label="${f("espacoImagem")} ${esc(t.marca)}" data-legenda="${esc(tr(t, "formato").toLowerCase())} 4:5" style="background:${degrades[t.nicho] || ""}"></div>`;
     return `<li class="trabalho cartao" data-nicho="${t.nicho}">${midia}
-      <span class="etiqueta">${esc(nomeNicho(t.nicho))}</span>
       <h3>${esc(tr(t, "titulo"))}</h3>
-      <p>${esc(t.marca)} · ${esc(tr(t, "formato"))}</p></li>`;
+      <p>${esc(tr(t, "formato"))}</p></li>`;
+  };
+
+  /* Uma linha por nicho, na ordem da lista "nichos" */
+  $("#galeria").innerHTML = nichosComTrabalho.map((n) => {
+    const itens = trabalhos.filter((t) => t.nicho === n.id);
+    const qtd = itens.length;
+    const rotulo = emIngles() ? `${qtd} ${qtd === 1 ? "video" : "videos"}` : `${qtd} ${qtd === 1 ? "vídeo" : "vídeos"}`;
+    return `<div class="linha-nicho" id="nicho-${n.id}">
+      <div class="linha-topo"><h3>${esc(tr(n, "nome"))}</h3><span class="linha-contagem">${rotulo}</span></div>
+      <ul class="linha-cards">${itens.map(cardTrabalho).join("")}</ul>
+    </div>`;
   }).join("");
-  filtrar(filtroAtual);
 
   $("#lista-servicos").innerHTML = servicos.map((s, i) =>
     `<li class="servico cartao revelar"><span class="servico-num" aria-hidden="true">${String(i + 1).padStart(2, "0")}</span>
@@ -1184,45 +1161,10 @@ ligarFormulario($("#form-contato"), $("#confirmacao-contato"),
   (nome) => emIngles()
     ? `Thank you, ${nome}! Your message is here. I'll reply within one business day.`
     : `Obrigada, ${nome}! Sua mensagem chegou por aqui. Eu te respondo em até um dia útil.`);
-ligarFormulario($("#form-kit"), $("#confirmacao-kit"),
-  (nome) => emIngles()
-    ? `All set, ${nome}! The media kit will reach your inbox soon.`
-    : `Prontinho, ${nome}! Em breve o mídia kit chega no seu e-mail.`);
 
-/* Card de captura: abre após 7 segundos, uma vez por visita */
-const fundo = $("#modal-fundo");
-const CHAVE_KIT = "midiaKitMostrado";
-let focoAnterior = null;
-
-function lerSessao() { try { return sessionStorage.getItem(CHAVE_KIT); } catch (e) { return null; } }
-function gravarSessao() { try { sessionStorage.setItem(CHAVE_KIT, "sim"); } catch (e) {} }
-
-function abrirModal() {
-  focoAnterior = document.activeElement;
-  fundo.hidden = false;
-  gravarSessao();
-  $("#kit-nome").focus();
-}
-function fecharModal() {
-  fundo.hidden = true;
-  if (focoAnterior && focoAnterior.focus) focoAnterior.focus();
-}
-$("#modal-fechar").addEventListener("click", fecharModal);
-fundo.addEventListener("click", (e) => { if (e.target === fundo) fecharModal(); });
 document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") {
-    if (!fundo.hidden) fecharModal();
-    else if (menu.classList.contains("aberto")) { fecharMenu(); menuBotao.focus(); }
-  }
-  /* Mantém o Tab dentro do card enquanto ele estiver aberto */
-  if (e.key === "Tab" && !fundo.hidden) {
-    const focaveis = fundo.querySelectorAll("button, input, [tabindex]:not([tabindex='-1'])");
-    const primeiro = focaveis[0], ultimo = focaveis[focaveis.length - 1];
-    if (e.shiftKey && document.activeElement === primeiro) { e.preventDefault(); ultimo.focus(); }
-    else if (!e.shiftKey && document.activeElement === ultimo) { e.preventDefault(); primeiro.focus(); }
-  }
+  if (e.key === "Escape" && menu.classList.contains("aberto")) { fecharMenu(); menuBotao.focus(); }
 });
-if (!lerSessao()) setTimeout(abrirModal, 7000);
 
 menuBotao.setAttribute("aria-label", f("abrirMenu"));
 
@@ -1277,8 +1219,9 @@ function pararPrevia(card) {
 }
 
 const temMouse = window.matchMedia("(hover: hover)").matches;
-/* No celular: toca a prévia do card que está bem visível na tela, um de cada vez */
-const obsVideo = (!temMouse && "IntersectionObserver" in window) ? new IntersectionObserver((entradas) => {
+/* No celular não toca prévia sozinha (o YouTube cobre o vídeo com título e botões): mostra só a capa, e o toque abre o vídeo */
+const PREVIA_NO_CELULAR = false;
+const obsVideo = (PREVIA_NO_CELULAR && !temMouse && "IntersectionObserver" in window) ? new IntersectionObserver((entradas) => {
   entradas.forEach((en) => {
     if (en.isIntersecting && en.target.offsetParent !== null) {
       todosCardsVideo().forEach((c) => { if (c !== en.target) pararPrevia(c); });
