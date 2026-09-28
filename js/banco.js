@@ -15,7 +15,7 @@
   const SUPABASE_CHAVE_PUBLICA = "sb_publishable_z_XCMeua1JKWz9xd9Z8fSg_iC1kX-HY";
 
   /* Endereços do site, usados no login e na recuperação de senha */
-  window.SITE_URL = "https://contatomaarianalino-source.github.io/ugcmari/";
+  window.SITE_URL = "https://ugcmarianalino.com/";
 
   if (!window.supabase || !window.supabase.createClient) {
     /* O Supabase não carregou (sem internet ou bloqueado). As páginas
