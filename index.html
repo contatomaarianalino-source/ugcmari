@@ -271,6 +271,8 @@
   .trabalho p{margin:0 4px;font-size:.85rem;color:var(--tinta-suave)}
   .trabalho .play{width:52px;height:52px}
   .trabalho .play svg{width:20px;height:20px}
+  /* Selo de destaque do vídeo (ex.: "2,4M views"), preenchido no painel */
+  .selo-destaque{position:absolute;left:8px;top:8px;z-index:3;padding:3px 9px;border-radius:999px;background:rgba(255,253,249,.94);color:var(--vermelho-escuro);font-size:.72rem;font-weight:800;box-shadow:0 4px 10px -6px rgba(0,0,0,.4)}
   .etiqueta{display:inline-block;font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--verde-escuro);border:1.5px dashed var(--verde);border-radius:999px;padding:2px 10px;margin-bottom:8px}
   .contagem{margin:-18px 0 26px;font-size:.95rem;color:var(--tinta-suave)}
   @media (min-width: 761px){ .contagem{display:none} }
@@ -607,10 +609,7 @@
         <p data-t="contato_p">Me conta sobre a sua marca e o seu produto. Eu respondo em até um dia útil.</p>
       </div>
       <div class="contato-grade">
-        <!-- FORMULÁRIO: hoje ele só mostra a confirmação na tela.
-             Para receber as mensagens de verdade, crie um formulário grátis no Formspree (formspree.io),
-             coloque action="https://formspree.io/f/SEU_CODIGO" e method="POST" na tag form
-             e apague o trecho "evento.preventDefault()" do formulário de contato no script. -->
+        <!-- FORMULÁRIO: cada mensagem enviada entra no painel (aba Marcas) como "Lead". -->
         <form class="cartao picote formulario revelar" id="form-contato" novalidate>
           <div class="campo">
             <label for="nome" data-t="label_nome">Seu nome</label>
@@ -744,7 +743,7 @@ const nichos = [
    e "alt" com a descrição da imagem. Se ficar vazio, aparece o bloco com degradê.
    Para um vídeo do YouTube, preencha "youtube" com o código do vídeo: a capa, a prévia e o vídeo grande aparecem sozinhos.
    "capa" é opcional: "oar1", "oar2" ou "oar3", conforme a opção de capa escolhida no YouTube Studio. */
-const trabalhos = [
+let trabalhos = [
   /* BELEZA: vídeos do YouTube */
   { nicho: "beleza", titulo: "Cheiro de Rica", formato: "Vídeo UGC", formatoEn: "UGC video", youtube: "bE7-iVNRbwA" },
   { nicho: "beleza", titulo: "Diva Beauty",    formato: "Vídeo UGC", formatoEn: "UGC video", youtube: "TpePxiy5A8k" },
@@ -982,25 +981,33 @@ $("#esteira").innerHTML = marcas.map((m) => itemMarca(m, false)).join("") + marc
 
 
 /* Monta todas as listas no idioma atual */
-function montarListas() {
-  $("#capa-numeros").innerHTML = metricas.slice(0, 3)
-    .map((m) => `<div>${numeroContador(m)}<span>${esc(tr(m, "rotulo"))}</span></div>`).join("");
-
-  document.querySelectorAll("#esteira .logo-marca").forEach((el, i) =>
-    el.setAttribute("aria-label", nomeMarca(marcas[i % marcas.length])));
-
+/* Galeria de trabalhos: uma linha por nicho. Separada para poder ser montada
+   de novo quando os vídeos chegam do banco (tabela "videos" do painel). */
+function montarGaleria() {
   /* Atalhos de nicho: cada um leva até a linha daquele nicho */
   const nichosComTrabalho = nichos.filter((n) => trabalhos.some((t) => t.nicho === n.id));
   $("#filtros").innerHTML = nichosComTrabalho
     .map((n) => `<a class="filtro" href="#nicho-${n.id}">${esc(tr(n, "nome"))}</a>`).join("");
 
-  /* Um card de trabalho (vídeo do YouTube ou imagem) */
+  /* Selo de destaque (ex.: "2,4M views"), preenchido no painel */
+  const selo = (t) => (t.destaque ? `<span class="selo-destaque">${esc(t.destaque)}</span>` : "");
+
+  /* Um card de trabalho (vídeo do YouTube, outro link ou imagem) */
   const cardTrabalho = (t) => {
     if (t.youtube) {
       const nome = tr(t, "titulo");
       return `<li class="trabalho cartao" data-nicho="${t.nicho}">
         <a class="video-card video-galeria" data-youtube="${esc(t.youtube)}"${t.capa ? ` data-capa="${esc(t.capa)}"` : ""} href="https://youtube.com/shorts/${esc(t.youtube)}" target="_blank" rel="noopener" aria-label="${f("assistir")}: ${esc(nome)}">
-          <div class="midia r-9x16"><span class="play" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 4l14 8-14 8z"/></svg></span></div>
+          <div class="midia r-9x16">${selo(t)}<span class="play" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 4l14 8-14 8z"/></svg></span></div>
+          <h3>${esc(nome)}</h3>
+          <p>${esc(tr(t, "formato"))}</p>
+        </a></li>`;
+    }
+    if (t.link) {
+      const nome = tr(t, "titulo");
+      return `<li class="trabalho cartao" data-nicho="${t.nicho}">
+        <a class="video-galeria" href="${esc(t.link)}" target="_blank" rel="noopener" aria-label="${f("assistir")}: ${esc(nome)}">
+          <div class="midia r-9x16 com-video" style="background:${degrades[t.nicho] || ""}">${selo(t)}<span class="play" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 4l14 8-14 8z"/></svg></span></div>
           <h3>${esc(nome)}</h3>
           <p>${esc(tr(t, "formato"))}</p>
         </a></li>`;
@@ -1023,6 +1030,16 @@ function montarListas() {
       <ul class="linha-cards">${itens.map(cardTrabalho).join("")}</ul>
     </div>`;
   }).join("");
+}
+
+function montarListas() {
+  $("#capa-numeros").innerHTML = metricas.slice(0, 3)
+    .map((m) => `<div>${numeroContador(m)}<span>${esc(tr(m, "rotulo"))}</span></div>`).join("");
+
+  document.querySelectorAll("#esteira .logo-marca").forEach((el, i) =>
+    el.setAttribute("aria-label", nomeMarca(marcas[i % marcas.length])));
+
+  montarGaleria();
 
   $("#lista-servicos").innerHTML = servicos.map((s, i) =>
     `<li class="servico cartao revelar"><span class="servico-num" aria-hidden="true">${String(i + 1).padStart(2, "0")}</span>
@@ -1141,8 +1158,9 @@ if ("IntersectionObserver" in window) {
 }
 
 /* Formulários: validação simples e confirmação na tela, sem recarregar */
-function ligarFormulario(form, caixa, mensagem) {
-  form.addEventListener("submit", (evento) => {
+/* "enviar" é opcional: recebe o formulário e devolve true se deu certo */
+function ligarFormulario(form, caixa, mensagem, enviar) {
+  form.addEventListener("submit", async (evento) => {
     evento.preventDefault();
     if (!form.checkValidity()) {
       const invalido = form.querySelector(":invalid");
@@ -1151,6 +1169,20 @@ function ligarFormulario(form, caixa, mensagem) {
       if (invalido) invalido.focus();
       return;
     }
+    const botao = form.querySelector('button[type="submit"]');
+    if (enviar) {
+      botao.disabled = true;
+      const ok = await enviar(form);
+      botao.disabled = false;
+      if (!ok) {
+        caixa.textContent = emIngles()
+          ? "I couldn't send it right now. Please message me on WhatsApp: +55 47 99991 6262."
+          : "Não consegui enviar agora. Me chama no WhatsApp: (47) 99991 6262.";
+        caixa.classList.add("visivel");
+        caixa.focus();
+        return;
+      }
+    }
     const nome = (form.querySelector("[name=nome]").value || "").trim().split(" ")[0];
     caixa.textContent = mensagem(nome);
     caixa.classList.add("visivel");
@@ -1158,10 +1190,32 @@ function ligarFormulario(form, caixa, mensagem) {
     caixa.focus();
   });
 }
+
+/* A mensagem do formulário entra na base de marcas do painel, como "Lead" */
+async function enviarContato(form) {
+  const banco = window.banco;
+  if (!banco) return false;
+  const campo = (n) => (form.elements[n].value || "").trim();
+  const hoje = new Date();
+  const dia = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, "0")}-${String(hoje.getDate()).padStart(2, "0")}`;
+  try {
+    const { error } = await banco.from("marcas").insert({
+      nome: campo("nome").slice(0, 200),
+      email: campo("email").slice(0, 200),
+      obs: campo("mensagem").slice(0, 3000),
+      situacao: "lead",
+      origem: "site",
+      ultimo_contato: dia
+    });
+    return !error;
+  } catch (e) { return false; }
+}
+
 ligarFormulario($("#form-contato"), $("#confirmacao-contato"),
   (nome) => emIngles()
     ? `Thank you, ${nome}! Your message is here. I'll reply within one business day.`
-    : `Obrigada, ${nome}! Sua mensagem chegou por aqui. Eu te respondo em até um dia útil.`);
+    : `Obrigada, ${nome}! Sua mensagem chegou por aqui. Eu te respondo em até um dia útil.`,
+  enviarContato);
 
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape" && menu.classList.contains("aberto")) { fecharMenu(); menuBotao.focus(); }
@@ -1288,6 +1342,95 @@ document.querySelector(".idioma").addEventListener("click", (e) => {
 
 /* Ano automático no rodapé */
 $("#ano").textContent = new Date().getFullYear();
+</script>
+
+<!-- ================= LIGAÇÃO COM O PAINEL (Supabase) =================
+     Se o banco não responder, o site continua igual, com a lista de vídeos
+     guardada acima como reserva. -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/banco.js"></script>
+<script>
+(function () {
+  const banco = window.banco;
+  if (!banco) return;
+  const ehTeste = location.protocol === "file:" || /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+
+  /* 1. REGISTRO DE VISITA: só a data, a página e de onde veio.
+        Nada de cookie, nada de serviço de fora, uma vez por visita. */
+  function nomeOrigem(texto) {
+    const t = String(texto || "").toLowerCase();
+    const mapa = [["instagram", "Instagram"], ["tiktok", "TikTok"], ["whatsapp", "WhatsApp"], ["wa.me", "WhatsApp"],
+      ["google", "Google"], ["facebook", "Facebook"], ["fb.", "Facebook"], ["youtube", "YouTube"], ["linkedin", "LinkedIn"],
+      ["t.co", "X"], ["twitter", "X"], ["x.com", "X"], ["linktr", "Linktree"], ["bing", "Bing"], ["pinterest", "Pinterest"]];
+    const achado = mapa.find(([k]) => t.includes(k));
+    return achado ? achado[1] : t.slice(0, 60);
+  }
+  function origemVisita() {
+    const p = new URLSearchParams(location.search);
+    const utm = p.get("utm_source") || p.get("ref");
+    if (utm) return nomeOrigem(utm);
+    if (!document.referrer) return "Direto";
+    try {
+      const host = new URL(document.referrer).hostname.replace(/^(www|m|l|lm)\./, "");
+      if (host === location.hostname) return "Direto";
+      return nomeOrigem(host);
+    } catch (e) { return "Direto"; }
+  }
+  try {
+    const chave = "visita-registrada";
+    if (!ehTeste && !sessionStorage.getItem(chave)) {
+      sessionStorage.setItem(chave, "1");
+      banco.from("visitas").insert({ pagina: location.pathname.slice(0, 300), origem: origemVisita() }).then(() => {}, () => {});
+    }
+  } catch (e) { /* sem visita registrada, o site segue normal */ }
+
+  /* 2. VÍDEOS DO PAINEL: o site mostra os vídeos da tabela "videos".
+        Editou no painel, o site muda sozinho na próxima vez que abrir. */
+  const idYoutube = (url) => { const m = String(url || "").match(/(?:shorts\/|youtu\.be\/|v=|embed\/)([\w-]{11})/); return m ? m[1] : null; };
+  const FORMATOS_EN = { "vídeo ugc": "UGC video", "unboxing": "Unboxing", "corte para anúncio": "Ad cut", "fotos do produto": "Product photos", "publicação no meu perfil": "Post on my profile" };
+  const semAcento = (s) => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
+
+  function idDoNicho(nome) {
+    const alvo = semAcento(nome);
+    if (!alvo) return null;
+    let n = nichos.find((x) => semAcento(x.nome) === alvo || semAcento(x.nomeEn) === alvo || x.id === alvo);
+    if (!n) {
+      /* Nicho novo criado no painel: entra antes de "Sites e apps" */
+      n = { id: alvo.replace(/[^a-z0-9]+/g, "-"), nome: String(nome).trim(), nomeEn: String(nome).trim() };
+      const posTech = nichos.findIndex((x) => x.id === "tech");
+      nichos.splice(posTech < 0 ? nichos.length : posTech, 0, n);
+    }
+    return n.id;
+  }
+
+  banco.from("videos")
+    .select("titulo,link,nicho,formato,marca,destaque,capa,ordem")
+    .eq("visivel", true)
+    .order("ordem", { ascending: true })
+    .then(({ data, error }) => {
+      if (error || !Array.isArray(data) || !data.length) return; /* sem dados: fica a lista reserva */
+      const novos = data.map((v) => {
+        const formato = v.formato || "Vídeo UGC";
+        return {
+          nicho: idDoNicho(v.nicho) || "outros",
+          titulo: v.titulo || v.marca || "",
+          marca: v.marca || "",
+          formato,
+          formatoEn: FORMATOS_EN[formato.toLowerCase()] || formato,
+          youtube: idYoutube(v.link),
+          link: v.link,
+          capa: v.capa || undefined,
+          destaque: v.destaque || ""
+        };
+      });
+      if (novos.some((t) => t.nicho === "outros") && !nichos.some((n) => n.id === "outros")) {
+        nichos.push({ id: "outros", nome: "Outros", nomeEn: "Other" });
+      }
+      trabalhos = novos;
+      montarGaleria();
+      prepararVideos();
+    }, () => {});
+})();
 </script>
 </body>
 </html>
