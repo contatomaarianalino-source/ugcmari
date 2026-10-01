@@ -184,7 +184,7 @@
   }
 
   /* ---------- 4. NAVEGAÇÃO ENTRE ABAS ---------- */
-  const TITULOS = { portfolio: "Portfólio", marcas: "Marcas", calendario: "Calendário", campanhas: "Campanhas", checklist: "Checklist do portfólio" };
+  const TITULOS = { portfolio: "Portfólio", marcas: "Marcas", tarefas: "Tarefas", calendario: "Calendário", campanhas: "Campanhas", checklist: "Checklist do portfólio", financeiro: "Financeiro" };
   const RENDER = {};
   let abaAtual = null;
 
@@ -659,7 +659,7 @@
      ABA 4. CAMPANHAS
      ===================================================================== */
   const FUNIL = ["Briefing", "Roteiro", "Aprovação Roteiro", "Gravação", "Edição", "Aprovado", "Entregue"];
-  let campanhas = [], filtroCamp = "todas", buscaCamp = "", ordemCamp = { col: "prazo", dir: 1 };
+  let campanhas = [], filtroCamp = "todas", buscaCamp = "", ordemCamp = { col: "fechado_em", dir: -1 };
   const COLUNAS_CAMP = [
     { col: "favorita", rotulo: "", valor: (c) => (c.favorita ? 0 : 1) },
     { col: "campanha", rotulo: "Campanha", valor: (c) => (c.campanha || "").toLowerCase() },
@@ -669,8 +669,10 @@
     { col: "qtd", rotulo: "Qtd", valor: (c) => Number(c.qtd) || 0 },
     { col: "valor", rotulo: "Valor", valor: (c) => Number(c.valor) || 0 },
     { col: "prazo", rotulo: "Prazo", valor: (c) => c.prazo || "9999-12-31" },
-    { col: "pagamento", rotulo: "Pagamento", valor: (c) => (c.pagamento === "pago" ? 1 : 0) }
+    { col: "pagamento", rotulo: "Pagamento", valor: (c) => (c.permuta ? 2 : c.pagamento === "pago" ? 1 : 0) },
+    { col: "fechado_em", rotulo: "Fechada em", valor: (c) => c.fechado_em || "0000" }
   ];
+  const mesAno = (s) => { const d = deChave(s); return d ? `${MESES[d.getMonth()].slice(0, 3)}/${d.getFullYear()}` : ""; };
 
   RENDER.campanhas = async function () {
     const el = $("#aba-campanhas");
@@ -689,7 +691,7 @@
       </div>
       <div class="tabela-caixa"><table>
         <thead><tr id="cab-camp"></tr></thead>
-        <tbody id="tabela-camp"><tr><td colspan="9"><p class="vazio">Carregando...</p></td></tr></tbody>
+        <tbody id="tabela-camp"><tr><td colspan="10"><p class="vazio">Carregando...</p></td></tr></tbody>
       </table></div>`;
     $$("[data-f]", el).forEach((b) => b.onclick = () => { filtroCamp = b.dataset.f; $$("[data-f]", el).forEach((x) => x.setAttribute("aria-pressed", x === b)); desenharCampanhas(); });
     $("#busca-camp").addEventListener("input", (e) => { buscaCamp = e.target.value; desenharCampanhas(); });
@@ -699,7 +701,8 @@
       { rotulo: "Cliente", valor: (c) => c.cliente }, { rotulo: "Tipo", valor: (c) => c.tipo }, { rotulo: "Status", valor: (c) => c.status },
       { rotulo: "Qtd", valor: (c) => c.qtd }, { rotulo: "Valor", valor: (c) => String(Number(c.valor) || 0).replace(".", ",") },
       { rotulo: "Prazo", valor: (c) => dataBr(c.prazo) }, { rotulo: "Pagamento", valor: (c) => (c.pagamento === "pago" ? "Pago" : "Pendente") },
-      { rotulo: "Ativa", valor: (c) => (c.ativa ? "sim" : "não") }
+      { rotulo: "Ativa", valor: (c) => (c.ativa ? "sim" : "não") }, { rotulo: "Permuta", valor: (c) => (c.permuta ? "sim" : "") },
+      { rotulo: "Fechada em", valor: (c) => dataBr(c.fechado_em) }
     ], campanhasFiltradas());
     const r = await ler("campanhas", (q) => q.order("criado_em", { ascending: false }));
     campanhas = r.dados;
@@ -722,7 +725,7 @@
     const valorTotal = campanhas.reduce((s, c) => s + (Number(c.valor) || 0), 0);
     const qtdTotal = campanhas.reduce((s, c) => s + (Number(c.qtd) || 0), 0);
     const ticket = qtdTotal > 0 ? valorTotal / qtdTotal : 0;
-    const aReceber = campanhas.filter((c) => c.pagamento !== "pago").reduce((s, c) => s + (Number(c.valor) || 0), 0);
+    const aReceber = campanhas.filter((c) => c.pagamento !== "pago" && !c.permuta).reduce((s, c) => s + (Number(c.valor) || 0), 0);
     const recebido = campanhas.filter((c) => c.pagamento === "pago").reduce((s, c) => s + (Number(c.valor) || 0), 0);
     $("#camp-numeros").innerHTML = `<div class="faixa-numeros">
       <div><span>Campanhas</span><strong>${numero(total)}</strong></div>
@@ -745,7 +748,7 @@
 
     const lista = campanhasFiltradas();
     const corpo = $("#tabela-camp");
-    if (!lista.length) { corpo.innerHTML = `<tr><td colspan="9"><p class="vazio">${campanhas.length ? "Nenhuma campanha com esse filtro." : "Nenhuma campanha ainda. Clique em \"Nova campanha\" para começar."}</p></td></tr>`; return; }
+    if (!lista.length) { corpo.innerHTML = `<tr><td colspan="10"><p class="vazio">${campanhas.length ? "Nenhuma campanha com esse filtro." : "Nenhuma campanha ainda. Clique em \"Nova campanha\" para começar."}</p></td></tr>`; return; }
     corpo.innerHTML = lista.map((c) => {
       const fi = FUNIL.indexOf(c.status);
       let aviso = "";
@@ -762,9 +765,10 @@
         <td><span class="pilula ${c.tipo === "Publicidade" ? "t-publicidade" : "t-conteudo"}">${esc(c.tipo)}</span></td>
         <td><span class="pilula f-${fi < 0 ? 0 : fi}">${esc(c.status)}</span></td>
         <td>${numero(c.qtd)}</td>
-        <td style="white-space:nowrap">${dinheiro(c.valor)}</td>
+        <td style="white-space:nowrap">${c.permuta ? `<span class="pilula t-conteudo">Permuta</span>` : dinheiro(c.valor)}</td>
         <td style="white-space:nowrap">${c.prazo ? dataBr(c.prazo) : `<span class="suave">sem prazo</span>`}${aviso}</td>
-        <td><span class="pilula ${c.pagamento === "pago" ? "p-pago" : "p-pendente"}">${c.pagamento === "pago" ? "Pago" : "Pendente"}</span></td>
+        <td>${c.permuta ? `<span class="suave">não se aplica</span>` : `<span class="pilula ${c.pagamento === "pago" ? "p-pago" : "p-pendente"}">${c.pagamento === "pago" ? "Pago" : "Pendente"}</span>`}</td>
+        <td style="white-space:nowrap">${c.fechado_em ? mesAno(c.fechado_em) : `<span class="suave">sem data</span>`}</td>
       </tr>`;
     }).join("");
     corpo.onclick = async (e) => {
@@ -782,7 +786,7 @@
   function formCampanha(c) {
     abrirFormulario({
       titulo: c ? "Editar campanha" : "Nova campanha",
-      valores: c || { tipo: "Conteúdo", status: "Briefing", qtd: 1, valor: 0, pagamento: "pendente", ativa: true },
+      valores: c || { tipo: "Conteúdo", status: "Briefing", qtd: 1, valor: 0, pagamento: "pendente", ativa: true, fechado_em: chaveDia(hojeData()) },
       campos: [
         { nome: "campanha", rotulo: "Campanha", obrigatorio: true, inteiro: true },
         { nome: "cliente", rotulo: "Cliente" },
@@ -792,6 +796,8 @@
         { nome: "qtd", rotulo: "Quantidade de vídeos", tipo: "number" },
         { nome: "valor", rotulo: "Valor (R$)", tipo: "number", passo: "0.01" },
         { nome: "pagamento", rotulo: "Pagamento", tipo: "select", opcoes: [["pendente", "Pendente"], ["pago", "Pago"]] },
+        { nome: "fechado_em", rotulo: "Fechada em", tipo: "date", ajuda: "O dia em que a marca fechou com você" },
+        { nome: "permuta", rotulo: "É permuta (sem pagamento)", tipo: "checkbox" },
         { nome: "ativa", rotulo: "Campanha ativa", tipo: "checkbox" },
         { nome: "favorita", rotulo: "Destacar (estrela)", tipo: "checkbox" }
       ],
@@ -802,6 +808,293 @@
         return ok;
       },
       aoApagar: c ? async () => { const ok = await gravar("campanhas", (t) => t.delete().eq("id", c.id), "Campanha apagada"); if (ok) await (abaAtual === "calendario" ? RENDER.calendario() : RENDER.campanhas()); return ok; } : null
+    });
+  }
+
+  /* =====================================================================
+     ABA 6. FINANCEIRO: o que entrou na conta e o que falta receber
+     ===================================================================== */
+  const MESES_CURTOS = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+  const nomeMes = (i) => MESES[i].charAt(0).toUpperCase() + MESES[i].slice(1);
+  const curto = (v) => (v >= 1000 ? `${(v / 1000).toFixed(1).replace(".", ",").replace(",0", "")}k` : String(Math.round(v)));
+  let entradas = [], aReceberFin = [], anoFin = new Date().getFullYear();
+  /* "Gocase · 2 meses em aberto" com cliente "Gocase" vira só "2 meses em aberto" */
+  const detalheCampanha = (c) => {
+    const nome = String(c.campanha || ""), cliente = String(c.cliente || "");
+    if (!cliente || nome === cliente) return "";
+    return nome.toLowerCase().startsWith(cliente.toLowerCase()) ? nome.slice(cliente.length).replace(/^[\s·:,-]+/, "") : nome;
+  };
+
+  RENDER.financeiro = async function () {
+    $("#aba-financeiro").innerHTML = `<p class="vazio">Carregando...</p>`;
+    const [ent, camp] = await Promise.all([
+      ler("entradas", (q) => q.order("data", { ascending: false }).order("id", { ascending: false }).limit(5000)),
+      ler("campanhas", (q) => q.eq("pagamento", "pendente").order("fechado_em", { ascending: true }))
+    ]);
+    entradas = ent.dados;
+    aReceberFin = camp.dados.filter((c) => !c.permuta && (Number(c.valor) || 0) > 0);
+    desenharFinanceiro();
+  };
+
+  function desenharFinanceiro() {
+    const el = $("#aba-financeiro");
+    const hoje = hojeData();
+    const anoHoje = hoje.getFullYear(), mesHoje = hoje.getMonth();
+    const anos = [...new Set(entradas.map((e) => Number(String(e.data).slice(0, 4))).concat([anoHoje]))].sort((a, b) => a - b);
+    if (!anos.includes(anoFin)) anoFin = anoHoje;
+    const doAno = entradas.filter((e) => String(e.data).startsWith(String(anoFin)));
+    const porMes = Array.from({ length: 12 }, () => 0);
+    doAno.forEach((e) => { const m = Number(String(e.data).slice(5, 7)) - 1; if (m >= 0 && m < 12) porMes[m] += Number(e.valor) || 0; });
+    const totalAno = porMes.reduce((s, v) => s + v, 0);
+    const ehAnoAtual = anoFin === anoHoje;
+
+    /* Média: do primeiro mês com entrada até o último mês já fechado */
+    const primeiro = porMes.findIndex((v) => v > 0);
+    const ultimo = primeiro < 0 ? -1 : (ehAnoAtual ? Math.max(mesHoje - 1, primeiro) : 11);
+    const mesesMedia = primeiro < 0 ? 0 : ultimo - primeiro + 1;
+    const somaMedia = mesesMedia > 0 ? porMes.slice(primeiro, ultimo + 1).reduce((s, v) => s + v, 0) : 0;
+    const media = mesesMedia > 0 ? somaMedia / mesesMedia : 0;
+    const melhor = porMes.reduce((b, v, i) => (v > porMes[b] ? i : b), 0);
+    const totalReceber = aReceberFin.reduce((s, c) => s + (Number(c.valor) || 0), 0);
+    const maxMes = Math.max(1, ...porMes);
+
+    el.innerHTML = `
+      <div class="bloco-titulo">
+        <span class="chips" role="group" aria-label="Escolher o ano">${anos.map((a) => `<button type="button" data-ano="${a}" aria-pressed="${a === anoFin}">${a}</button>`).join("")}</span>
+        <div class="ferramentas">
+          <button class="btn claro" id="btn-csv-ent">${icone("baixar")}Baixar CSV</button>
+          <button class="btn" id="btn-nova-ent">${icone("mais")}Nova entrada</button>
+        </div>
+      </div>
+      <div class="faixa-numeros bloco">
+        <div><span>Recebido em ${anoFin}</span><strong>${dinheiro(totalAno)}</strong><small>${plural(doAno.length, "entrada", "entradas")}</small></div>
+        ${ehAnoAtual ? `<div><span>Recebido em ${MESES[mesHoje]}</span><strong>${dinheiro(porMes[mesHoje])}</strong><small>${mesHoje > 0 ? `${MESES[mesHoje - 1]}: ${dinheiro(porMes[mesHoje - 1])}` : "primeiro mês do ano"}</small></div>` : ""}
+        <div><span>Média por mês</span><strong>${dinheiro(media)}</strong><small>${mesesMedia > 0 ? (mesesMedia === 1 ? `em ${MESES[primeiro]}` : `de ${MESES[primeiro]} a ${MESES[ultimo]}`) : "aparece com as entradas"}</small></div>
+        <div><span>Melhor mês</span><strong>${totalAno > 0 ? nomeMes(melhor) : "Ainda sem entradas"}</strong>${totalAno > 0 ? `<small>${dinheiro(porMes[melhor])}</small>` : ""}</div>
+        <div class="destaque"><span>A receber</span><strong>${dinheiro(totalReceber)}</strong><small>${aReceberFin.length ? plural(aReceberFin.length, "marca", "marcas") : "nada pendente"}</small></div>
+      </div>
+      <div class="grade-2 grade-fin bloco">
+        <div class="cartao">
+          <div class="bloco-titulo"><h2>Quanto entrou em cada mês de ${anoFin}</h2></div>
+          ${totalAno === 0 ? `<p class="vazio">Quando você lançar entradas de ${anoFin}, o gráfico aparece aqui.</p>`
+            : `<div class="grafico grafico-fin" role="img" aria-label="Entradas por mês em ${anoFin}">${porMes.map((v, i) => `
+              <div class="barra${ehAnoAtual && i === mesHoje ? " hoje" : ""}" title="${nomeMes(i)}: ${dinheiro(v)}">
+                <i style="height:${(v / maxMes) * 100}%">${v ? `<b>${curto(v)}</b>` : ""}</i>
+                <span>${MESES_CURTOS[i]}</span>
+              </div>`).join("")}</div>`}
+        </div>
+        <div class="cartao">
+          <div class="bloco-titulo"><h2>A receber</h2><strong class="valor-receber">${dinheiro(totalReceber)}</strong></div>
+          ${aReceberFin.length ? `<ul class="receber" id="lista-receber">${aReceberFin.map((c) => `
+            <li>
+              <div><strong>${esc(c.cliente || c.campanha)}</strong><span class="suave">${esc([detalheCampanha(c), c.fechado_em ? `fechada em ${mesAno(c.fechado_em)}` : ""].filter(Boolean).join(" · "))}</span></div>
+              <b>${dinheiro(c.valor)}</b>
+              <button class="btn claro" data-recebi="${c.id}">Recebi</button>
+            </li>`).join("")}</ul>`
+            : `<p class="vazio">Nada a receber. Tudo em dia!</p>`}
+        </div>
+      </div>
+      <div class="bloco">
+        <div class="bloco-titulo"><h2>Entradas de ${anoFin}</h2><span class="suave">Clique numa linha para editar ou apagar</span></div>
+        <div class="tabela-caixa"><table>
+          <thead><tr><th>Data</th><th>De onde veio</th><th class="num">Valor</th></tr></thead>
+          <tbody id="tabela-ent"></tbody>
+        </table></div>
+      </div>`;
+
+    /* Tabela de entradas, agrupada por mês (mais recente primeiro) */
+    const linhas = [];
+    for (let m = 11; m >= 0; m--) {
+      const doMes = doAno.filter((e) => Number(String(e.data).slice(5, 7)) - 1 === m);
+      if (!doMes.length) continue;
+      linhas.push(`<tr class="mes-linha"><td colspan="2">${nomeMes(m)}</td><td class="num">${dinheiro(porMes[m])}</td></tr>`);
+      doMes.sort((a, b) => String(b.data).localeCompare(String(a.data)) || b.id - a.id).forEach((e) => linhas.push(`
+        <tr class="clicavel" data-ent="${e.id}"><td style="white-space:nowrap">${dataBr(e.data)}</td><td>${esc(e.descricao)}</td><td class="num">${dinheiro(e.valor)}</td></tr>`));
+    }
+    $("#tabela-ent").innerHTML = linhas.length ? linhas.join("") : `<tr><td colspan="3"><p class="vazio">Nenhuma entrada em ${anoFin}. Clique em "Nova entrada" ou use o botão "Recebi" ao lado de uma marca.</p></td></tr>`;
+
+    $$("[data-ano]", el).forEach((b) => b.onclick = () => { anoFin = Number(b.dataset.ano); desenharFinanceiro(); });
+    $("#btn-nova-ent").onclick = () => formEntrada();
+    $("#btn-csv-ent").onclick = () => baixarCsv(`entradas-${anoFin}`, [
+      { rotulo: "Data", valor: (e) => dataBr(e.data) }, { rotulo: "De onde veio", valor: (e) => e.descricao },
+      { rotulo: "Valor", valor: (e) => String(Number(e.valor) || 0).replace(".", ",") }
+    ], [...doAno].sort((a, b) => String(a.data).localeCompare(String(b.data))));
+    $("#tabela-ent").onclick = (ev) => {
+      const tr = ev.target.closest("tr[data-ent]"); if (!tr) return;
+      const e = entradas.find((x) => x.id === Number(tr.dataset.ent)); if (e) formEntrada(e);
+    };
+    const lista = $("#lista-receber");
+    if (lista) lista.onclick = (ev) => {
+      const b = ev.target.closest("[data-recebi]"); if (!b) return;
+      const c = aReceberFin.find((x) => x.id === Number(b.dataset.recebi)); if (c) formRecebi(c);
+    };
+  }
+
+  function formEntrada(e) {
+    const nomes = [...new Set(entradas.map((x) => x.descricao).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+    abrirFormulario({
+      titulo: e ? "Editar entrada" : "Nova entrada",
+      valores: e || { data: chaveDia(hojeData()), valor: "" },
+      campos: [
+        { nome: "descricao", rotulo: "De onde veio", obrigatorio: true, inteiro: true, lista: nomes, ajuda: "Ex.: Beyoung, comissão Onda Marinha, consulta" },
+        { nome: "data", rotulo: "Data em que entrou", tipo: "date", obrigatorio: true },
+        { nome: "valor", rotulo: "Valor (R$)", tipo: "number", passo: "0.01", obrigatorio: true }
+      ],
+      aoSalvar: async (d) => {
+        const ok = e ? await gravar("entradas", (t) => t.update(d).eq("id", e.id), "Entrada salva")
+                     : await gravar("entradas", (t) => t.insert(d), "Entrada lançada");
+        if (ok) await RENDER.financeiro();
+        return ok;
+      },
+      aoApagar: e ? async () => { const ok = await gravar("entradas", (t) => t.delete().eq("id", e.id), "Entrada apagada"); if (ok) await RENDER.financeiro(); return ok; } : null
+    });
+  }
+
+  /* "Recebi": lança a entrada e marca a campanha como paga.
+     Se entrou menos do que o combinado, o resto continua a receber. */
+  function formRecebi(c) {
+    const devido = Number(c.valor) || 0;
+    abrirFormulario({
+      titulo: `Recebi de ${c.cliente || c.campanha}`,
+      valores: { data: chaveDia(hojeData()), valor: devido },
+      campos: [
+        { nome: "data", rotulo: "Quando entrou", tipo: "date", obrigatorio: true },
+        { nome: "valor", rotulo: "Quanto entrou (R$)", tipo: "number", passo: "0.01", obrigatorio: true, ajuda: `Combinado: ${dinheiro(devido)}. Se entrou só uma parte, o resto continua em "A receber".` }
+      ],
+      aoSalvar: async (d) => {
+        const recebido = Number(d.valor) || 0;
+        if (recebido <= 0) { toast("Coloque quanto entrou.", true); return false; }
+        const ok = await gravar("entradas", (t) => t.insert({ data: d.data, valor: recebido, descricao: c.cliente || c.campanha, campanha_id: c.id }));
+        if (!ok) return false;
+        const resto = Math.round((devido - recebido) * 100) / 100;
+        const mudanca = resto > 0 ? { valor: resto } : { pagamento: "pago", ativa: c.status === "Entregue" ? false : c.ativa };
+        await gravar("campanhas", (t) => t.update(mudanca).eq("id", c.id), resto > 0 ? `Lançado! Ainda faltam ${dinheiro(resto)}` : "Lançado! Marquei como pago");
+        await RENDER.financeiro();
+        return true;
+      }
+    });
+  }
+
+  /* =====================================================================
+     ABA 7. TAREFAS: o que eu tenho que fazer
+     ===================================================================== */
+  const GRUPOS_TAREFA = ["Esta semana", "Vídeos TikTok Shop", "Toda semana", "Depois"];
+  let tarefas = [];
+  const inicioSemana = () => { const d = hojeData(); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return d; };
+  /* "Toda semana" volta a ficar pendente na segunda-feira seguinte */
+  const tarefaFeita = (t) => (t.grupo === "Toda semana" ? !!(t.feito && t.feito_em && new Date(t.feito_em) >= inicioSemana()) : !!t.feito);
+
+  RENDER.tarefas = async function () {
+    $("#aba-tarefas").innerHTML = `<p class="vazio">Carregando...</p>`;
+    const r = await ler("tarefas", (q) => q.order("ordem").order("id"));
+    tarefas = r.dados;
+    desenharTarefas();
+  };
+
+  function desenharTarefas() {
+    const el = $("#aba-tarefas");
+    const hoje = chaveDia(hojeData());
+    const daqui7 = new Date(hojeData()); daqui7.setDate(daqui7.getDate() + 7);
+    const pend = tarefas.filter((t) => !tarefaFeita(t));
+    const atrasadas = pend.filter((t) => t.prazo && String(t.prazo).slice(0, 10) < hoje);
+    const logo = pend.filter((t) => t.prazo && String(t.prazo).slice(0, 10) >= hoje && String(t.prazo).slice(0, 10) <= chaveDia(daqui7));
+    const feitasSemana = tarefas.filter((t) => tarefaFeita(t) && t.feito_em && new Date(t.feito_em) >= inicioSemana());
+    const grupos = [...new Set(GRUPOS_TAREFA.concat(tarefas.map((t) => t.grupo)))].filter((g) => g === "Esta semana" || tarefas.some((t) => t.grupo === g));
+    const opcoesGrupo = [...new Set(GRUPOS_TAREFA.concat(tarefas.map((t) => t.grupo)))];
+
+    el.innerHTML = `
+      <div class="faixa-numeros bloco">
+        <div><span>Pendentes</span><strong>${numero(pend.length)}</strong></div>
+        <div><span>Atrasadas</span><strong class="${atrasadas.length ? "txt-alerta" : ""}">${numero(atrasadas.length)}</strong></div>
+        <div><span>Vencem nos próximos 7 dias</span><strong>${numero(logo.length)}</strong></div>
+        <div><span>Feitas nesta semana</span><strong>${numero(feitasSemana.length)}</strong></div>
+      </div>
+      <form class="nova-tarefa cartao bloco" id="form-tarefa">
+        <input class="nt-texto" id="nt-texto" placeholder="O que você precisa fazer?" aria-label="Nova tarefa" autocomplete="off">
+        <select id="nt-grupo" aria-label="Grupo">${opcoesGrupo.map((g) => `<option>${esc(g)}</option>`).join("")}</select>
+        <input id="nt-prazo" type="date" aria-label="Prazo (opcional)" title="Prazo (opcional)">
+        <button class="btn" type="submit">${icone("mais")}Adicionar</button>
+      </form>
+      <div class="grupos-tarefa">${grupos.map(cartaoGrupo).join("")}</div>`;
+
+    $("#form-tarefa").addEventListener("submit", async (ev) => {
+      ev.preventDefault();
+      const texto = $("#nt-texto").value.trim();
+      if (!texto) { $("#nt-texto").focus(); toast("Escreva a tarefa.", true); return; }
+      const grupo = $("#nt-grupo").value;
+      const ordem = Math.max(0, ...tarefas.filter((t) => t.grupo === grupo).map((t) => t.ordem || 0)) + 10;
+      if (await gravar("tarefas", (t) => t.insert({ texto, grupo, prazo: $("#nt-prazo").value || null, ordem }), "Tarefa adicionada")) await RENDER.tarefas();
+    });
+    $(".grupos-tarefa", el).onchange = async (ev) => {
+      const cb = ev.target.closest("input[data-check]"); if (!cb) return;
+      const t = tarefas.find((x) => x.id === Number(cb.closest("[data-id]").dataset.id)); if (!t) return;
+      const mudanca = { feito: cb.checked, feito_em: cb.checked ? new Date().toISOString() : null };
+      if (await gravar("tarefas", (q) => q.update(mudanca).eq("id", t.id), cb.checked ? "Feito!" : "Voltou para pendente")) { Object.assign(t, mudanca); desenharTarefas(); }
+      else cb.checked = !cb.checked;
+    };
+    $(".grupos-tarefa", el).onclick = async (ev) => {
+      const li = ev.target.closest("[data-id]");
+      const t = li && tarefas.find((x) => x.id === Number(li.dataset.id));
+      if (t && ev.target.closest("[data-editar]")) { formTarefa(t, opcoesGrupo); return; }
+      if (t && ev.target.closest("[data-apagar]")) {
+        if (!confirm(`Apagar "${t.texto}"?`)) return;
+        if (await gravar("tarefas", (q) => q.delete().eq("id", t.id), "Tarefa apagada")) await RENDER.tarefas();
+        return;
+      }
+      const limpar = ev.target.closest("[data-limpar]");
+      if (limpar) {
+        const ids = tarefas.filter((x) => x.grupo === limpar.dataset.limpar && tarefaFeita(x)).map((x) => x.id);
+        if (!ids.length || !confirm(`Apagar ${plural(ids.length, "tarefa feita", "tarefas feitas")} de "${limpar.dataset.limpar}"?`)) return;
+        if (await gravar("tarefas", (q) => q.delete().in("id", ids), "Feitas apagadas")) await RENDER.tarefas();
+      }
+    };
+  }
+
+  function cartaoGrupo(g) {
+    const porPrazo = (t) => (t.prazo ? String(t.prazo).slice(0, 10) : "9999-12-31");
+    const itens = tarefas.filter((t) => t.grupo === g).sort((a, b) =>
+      (tarefaFeita(a) - tarefaFeita(b)) || porPrazo(a).localeCompare(porPrazo(b)) || ((a.ordem || 0) - (b.ordem || 0)) || (a.id - b.id));
+    const feitas = itens.filter(tarefaFeita).length;
+    return `<div class="cartao">
+      <div class="bloco-titulo"><h2>${esc(g)}</h2><span class="suave">${itens.length ? `${feitas} de ${itens.length} feitas${g === "Toda semana" ? " nesta semana" : ""}` : ""}</span></div>
+      ${itens.length ? `<ul class="tarefas">${itens.map(linhaTarefa).join("")}</ul>` : `<p class="vazio">Nada aqui. Adicione uma tarefa lá em cima.</p>`}
+      ${g !== "Toda semana" && feitas ? `<button class="btn claro limpar" data-limpar="${esc(g)}">Apagar as feitas</button>` : ""}
+    </div>`;
+  }
+
+  function linhaTarefa(t) {
+    const feita = tarefaFeita(t);
+    let prazo = "";
+    if (t.prazo) {
+      const d = diasAte(t.prazo);
+      if (!feita && d < 0) prazo = `<span class="etiqueta et-atraso">atrasada ${plural(-d, "dia", "dias")}</span>`;
+      else if (!feita && d === 0) prazo = `<span class="etiqueta et-perto">hoje</span>`;
+      else if (!feita && d <= 3) prazo = `<span class="etiqueta et-perto">em ${plural(d, "dia", "dias")}</span>`;
+      else prazo = `<span class="suave">${dataBr(t.prazo)}</span>`;
+    }
+    return `<li class="tarefa${feita ? " feito" : ""}" data-id="${t.id}">
+      <label><input type="checkbox" data-check ${feita ? "checked" : ""}><span>${esc(t.texto)}</span></label>
+      ${prazo}
+      <button type="button" class="icone-btn" data-editar aria-label="Editar tarefa">${icone("lapis")}</button>
+      <button type="button" class="icone-btn" data-apagar aria-label="Apagar tarefa">${icone("lixo")}</button>
+    </li>`;
+  }
+
+  function formTarefa(t, grupos) {
+    abrirFormulario({
+      titulo: "Editar tarefa",
+      valores: { texto: t.texto, grupo: t.grupo, prazo: t.prazo ? String(t.prazo).slice(0, 10) : "" },
+      campos: [
+        { nome: "texto", rotulo: "Tarefa", obrigatorio: true, inteiro: true },
+        { nome: "grupo", rotulo: "Grupo", obrigatorio: true, lista: grupos, ajuda: "Escolha um grupo ou escreva um novo" },
+        { nome: "prazo", rotulo: "Prazo", tipo: "date" }
+      ],
+      aoSalvar: async (d) => {
+        const ok = await gravar("tarefas", (q) => q.update(d).eq("id", t.id), "Tarefa salva");
+        if (ok) await RENDER.tarefas();
+        return ok;
+      },
+      aoApagar: async () => { const ok = await gravar("tarefas", (q) => q.delete().eq("id", t.id), "Tarefa apagada"); if (ok) await RENDER.tarefas(); return ok; }
     });
   }
 
