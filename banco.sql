@@ -253,6 +253,30 @@ select 'Campanha de exemplo (apague)', 'Marca de exemplo', 'Conteúdo', 'Briefin
 where not exists (select 1 from public.campanhas);
 
 
+-- ---------------------------------------------------------------------
+-- 7. CLIQUES NOS VÍDEOS (ranking "Vídeos mais assistidos" do painel)
+-- Guarda só a data e o código do vídeo no YouTube. Nada de quem clicou.
+-- ---------------------------------------------------------------------
+create table if not exists public.cliques (
+  id     bigint generated always as identity primary key,
+  data   timestamptz not null default now(),
+  video  text not null
+);
+create index if not exists cliques_data_idx on public.cliques (data);
+
+alter table public.cliques enable row level security;
+
+drop policy if exists "dona faz tudo" on public.cliques;
+create policy "dona faz tudo" on public.cliques
+  for all to authenticated using (public.eh_dona()) with check (public.eh_dona());
+
+-- EXCEÇÃO 4: qualquer visitante pode ANOTAR um clique. Só anotar.
+drop policy if exists "site registra clique" on public.cliques;
+create policy "site registra clique" on public.cliques
+  for insert to anon
+  with check (video ~ '^[A-Za-z0-9_-]{11}$');
+
+
 -- =====================================================================
 -- COMO TESTAR SE A TRANCA FUNCIONA
 -- Depois de rodar tudo acima, apague o conteúdo do editor, cole só
@@ -266,6 +290,7 @@ where not exists (select 1 from public.campanhas);
 -- union all select 'campanhas', count(*) from public.campanhas
 -- union all select 'visitas', count(*) from public.visitas
 -- union all select 'marcados', count(*) from public.marcados
+-- union all select 'cliques', count(*) from public.cliques
 -- union all select 'videos escondidos', count(*) from public.videos where visivel = false;
 -- rollback;
 --

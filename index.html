@@ -1311,6 +1311,7 @@ function abrirVideo(id) {
   videoPlayer.innerHTML = `<iframe src="${urlCompleto(id)}" title="${emIngles() ? "Video" : "Vídeo"}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
   videoModal.hidden = false;
   $("#video-fechar").focus();
+  if (window.registrarClique) window.registrarClique(id);
 }
 function fecharVideo() {
   videoModal.hidden = true;
@@ -1351,7 +1352,10 @@ $("#ano").textContent = new Date().getFullYear();
 (function () {
   const banco = window.banco;
   if (!banco) return;
-  const ehTeste = location.protocol === "file:" || /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+  /* Não conta: arquivo local, servidor de teste, ou o navegador da Mari (marcado ao entrar no painel) */
+  let ehDona = false;
+  try { ehDona = localStorage.getItem("nao-contar-visitas") === "1"; } catch (e) {}
+  const ehTeste = ehDona || location.protocol === "file:" || /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
 
   /* 1. REGISTRO DE VISITA: só a data, a página e de onde veio.
         Nada de cookie, nada de serviço de fora, uma vez por visita. */
@@ -1359,7 +1363,8 @@ $("#ano").textContent = new Date().getFullYear();
     const t = String(texto || "").toLowerCase();
     const mapa = [["instagram", "Instagram"], ["tiktok", "TikTok"], ["whatsapp", "WhatsApp"], ["wa.me", "WhatsApp"],
       ["google", "Google"], ["facebook", "Facebook"], ["fb.", "Facebook"], ["youtube", "YouTube"], ["linkedin", "LinkedIn"],
-      ["t.co", "X"], ["twitter", "X"], ["x.com", "X"], ["linktr", "Linktree"], ["bing", "Bing"], ["pinterest", "Pinterest"]];
+      ["t.co", "X"], ["twitter", "X"], ["x.com", "X"], ["linktr", "Linktree"], ["bing", "Bing"], ["pinterest", "Pinterest"],
+      ["upwork", "Upwork"], ["riise", "Riise"], ["e-mail", "E-mail"], ["email", "E-mail"]];
     const achado = mapa.find(([k]) => t.includes(k));
     return achado ? achado[1] : t.slice(0, 60);
   }
@@ -1381,6 +1386,18 @@ $("#ano").textContent = new Date().getFullYear();
       banco.from("visitas").insert({ pagina: location.pathname.slice(0, 300), origem: origemVisita() }).then(() => {}, () => {});
     }
   } catch (e) { /* sem visita registrada, o site segue normal */ }
+
+  /* 1b. CLIQUE EM VÍDEO: anota qual vídeo foi aberto, para o ranking do painel.
+         Guarda só o código do vídeo no YouTube, uma vez por vídeo em cada visita. */
+  window.registrarClique = function (id) {
+    if (ehTeste || !/^[\w-]{11}$/.test(String(id || ""))) return;
+    try {
+      const chave = "clique-" + id;
+      if (sessionStorage.getItem(chave)) return;
+      sessionStorage.setItem(chave, "1");
+    } catch (e) { /* sem sessionStorage, anota mesmo assim */ }
+    banco.from("cliques").insert({ video: id }).then(() => {}, () => {});
+  };
 
   /* 2. VÍDEOS DO PAINEL: o site mostra os vídeos da tabela "videos".
         Editou no painel, o site muda sozinho na próxima vez que abrir. */
