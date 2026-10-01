@@ -21,6 +21,8 @@
   if (!sessao) { irProLogin(); return; }
   banco.auth.onAuthStateChange((evento, s) => { if (evento === "SIGNED_OUT" || !s) irProLogin(); });
   document.documentElement.classList.remove("verificando");
+  /* Marca este navegador como seu: o site para de contar as suas visitas e cliques */
+  try { localStorage.setItem("nao-contar-visitas", "1"); } catch (e) {}
 
   /* ---------- 2. AJUDANTES ---------- */
   const $ = (s, el = document) => el.querySelector(s);
@@ -222,12 +224,23 @@
     const el = $("#aba-portfolio");
     el.innerHTML = `<p class="vazio">Carregando...</p>`;
     const inicio = hojeData(); inicio.setDate(inicio.getDate() - 13);
-    const [vis, vids] = await Promise.all([
+    const [vis, vids, cli] = await Promise.all([
       ler("visitas", (q) => q.select("data,origem").gte("data", inicio.toISOString()).limit(20000)),
-      ler("videos", (q) => q.order("ordem", { ascending: true }).order("id", { ascending: true }))
+      ler("videos", (q) => q.order("ordem", { ascending: true }).order("id", { ascending: true })),
+      ler("cliques", (q) => q.select("data,video").gte("data", inicio.toISOString()).limit(20000))
     ]);
     videos = vids.dados;
     const visitas = vis.dados;
+
+    /* Vídeos mais assistidos: cliques dos últimos 14 dias, ligados ao vídeo pelo código do YouTube */
+    const codigoYT = (url) => { const m = String(url || "").match(/(?:shorts\/|youtu\.be\/|v=|embed\/)([\w-]{11})/); return m ? m[1] : null; };
+    const porCodigo = {};
+    videos.forEach((v) => { const c = codigoYT(v.link); if (c && !porCodigo[c]) porCodigo[c] = v; });
+    const contaCliques = {};
+    cli.dados.forEach((c) => { if (c.video) contaCliques[c.video] = (contaCliques[c.video] || 0) + 1; });
+    const totalCliques = cli.dados.length;
+    const ranking = Object.entries(contaCliques).sort((a, b) => b[1] - a[1]).slice(0, 10);
+    const maxClique = ranking.length ? ranking[0][1] : 1;
 
     /* Visitas por dia, nos últimos 14 dias */
     const dias = [];
@@ -274,6 +287,20 @@
             ? `<p class="vazio">Aqui vai aparecer de onde vêm as visitas: Instagram, TikTok, WhatsApp, Google ou link direto.</p>`
             : `<ul class="origens">${listaOrigens.slice(0, 8).map(([o, n]) => `
                 <li><span>${esc(o)}</span><strong>${numero(n)}</strong><span class="trilho"><i style="width:${(n / total14) * 100}%"></i></span></li>`).join("")}</ul>`}
+        </div>
+      </div>
+      <div class="bloco">
+        <div class="cartao">
+          <div class="bloco-titulo"><h2>Vídeos mais assistidos</h2><span class="suave">${totalCliques ? `${plural(totalCliques, "vídeo aberto", "vídeos abertos")} em 14 dias` : "últimos 14 dias"}</span></div>
+          ${ranking.length === 0
+            ? `<p class="vazio">Quando alguém clicar num vídeo do seu portfólio para assistir, ele aparece aqui. O vídeo mais aberto fica em primeiro.</p>`
+            : `<ul class="origens">${ranking.map(([c, n], i) => {
+                const v = porCodigo[c];
+                const nome = v ? (v.titulo || v.marca || "Vídeo") : "Vídeo que não está mais na lista";
+                const extra = v && v.nicho ? ` <span class="suave">· ${esc(v.nicho)}</span>` : "";
+                return `
+                <li><span>${i + 1}. ${v ? `<a href="${esc(v.link)}" target="_blank" rel="noopener">${esc(nome)}</a>` : esc(nome)}${extra}</span><strong>${plural(n, "clique", "cliques")}</strong><span class="trilho"><i style="width:${(n / maxClique) * 100}%"></i></span></li>`;
+              }).join("")}</ul>`}
         </div>
       </div>
       <div class="bloco">
