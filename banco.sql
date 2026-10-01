@@ -318,6 +318,26 @@ drop policy if exists "dona faz tudo" on public.tarefas;
 create policy "dona faz tudo" on public.tarefas
   for all to authenticated using (public.eh_dona()) with check (public.eh_dona());
 
+-- FIXOS MENSAIS: contratos que pagam o mesmo valor todo mês.
+-- Cada mês sem entrada ligada ao fixo aparece em "A receber".
+create table if not exists public.fixos (
+  id         bigint generated always as identity primary key,
+  cliente    text not null,
+  valor      numeric(12, 2) not null check (valor >= 0),
+  dia        smallint check (dia between 1 and 31),
+  inicio     date not null,
+  fim        date,
+  ativo      boolean not null default true,
+  criado_em  timestamptz not null default now()
+);
+alter table public.entradas add column if not exists fixo_id bigint references public.fixos (id) on delete set null;
+alter table public.entradas add column if not exists referente date;
+
+alter table public.fixos enable row level security;
+drop policy if exists "dona faz tudo" on public.fixos;
+create policy "dona faz tudo" on public.fixos
+  for all to authenticated using (public.eh_dona()) with check (public.eh_dona());
+
 
 -- =====================================================================
 -- COMO TESTAR SE A TRANCA FUNCIONA
