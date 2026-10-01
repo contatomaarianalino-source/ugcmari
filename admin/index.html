@@ -189,6 +189,36 @@
   .ideias li em{display:block;color:var(--tinta-suave);margin-top:2px}
   textarea.roteiro{width:100%;min-height:150px;border:2px dashed var(--tracejado);border-radius:var(--raio-p);background:var(--papel);padding:10px 12px;resize:vertical}
 
+  /* Financeiro */
+  .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+  tr.mes-linha td{background:var(--creme);font-weight:700;color:var(--cafe-escuro)}
+  .grafico-fin .barra i b{font-size:10px}
+  .grade-fin{grid-template-columns:3fr 2fr}
+  @media (max-width:860px){.grade-fin{grid-template-columns:1fr}}
+  .valor-receber{color:#7a5510;font-variant-numeric:tabular-nums}
+  .receber{list-style:none;margin:0;padding:0;display:grid;gap:6px;max-height:340px;overflow:auto}
+  .receber li{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:7px 10px;border-radius:var(--raio-p);background:var(--creme)}
+  .receber li strong{display:block;font-size:13px}
+  .receber li b{font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--cafe-escuro)}
+  .faixa-numeros .destaque strong{color:#7a5510}
+
+  /* Tarefas */
+  .nova-tarefa{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .nova-tarefa input,.nova-tarefa select{border:2px dashed var(--tracejado);border-radius:999px;background:var(--creme);padding:6px 12px;min-height:34px}
+  .nova-tarefa .nt-texto{flex:1;min-width:200px}
+  .grupos-tarefa{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;align-items:start}
+  .grupos-tarefa .cartao{margin:0}
+  .tarefas{list-style:none;margin:0;padding:0}
+  .tarefa{display:flex;align-items:center;gap:6px;padding:6px 2px;border-bottom:1px solid var(--linha)}
+  .tarefa:last-child{border-bottom:0}
+  .tarefa label{display:flex;align-items:center;gap:10px;flex:1;min-width:0;cursor:pointer}
+  .tarefa input{width:17px;height:17px;accent-color:var(--verde);flex:none}
+  .tarefa.feito span{text-decoration:line-through;color:var(--tinta-suave)}
+  .tarefa .icone-btn{width:26px;height:26px;opacity:.45}
+  .tarefa:hover .icone-btn,.tarefa .icone-btn:focus{opacity:1}
+  .limpar{margin-top:8px}
+  .txt-alerta{color:var(--vermelho-escuro)!important}
+
   /* Janela (modal) */
   dialog{border:2px dashed var(--tracejado);border-radius:var(--raio);background:var(--papel);padding:0;width:min(560px,calc(100vw - 24px));max-height:calc(100vh - 40px);color:var(--tinta)}
   dialog::backdrop{background:rgba(42,28,20,.45)}
@@ -248,6 +278,8 @@
   <symbol id="i-seta-e" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></symbol>
   <symbol id="i-seta-d" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></symbol>
   <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+  <symbol id="i-tarefa" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8.5 12l2.5 2.5 4.5-5"/></symbol>
+  <symbol id="i-dinheiro" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6.5 9.5v.01M17.5 14.5v.01"/></symbol>
   <symbol id="i-externo" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 01-1 1H5a1 1 0 01-1-1V7a1 1 0 011-1h5"/></symbol>
 </svg>
 
@@ -261,9 +293,14 @@
     </div>
     <div class="menu-grupo">
       <p>minha rotina</p>
+      <button class="menu-item" data-aba="tarefas"><svg class="ic"><use href="#i-tarefa"/></svg>Tarefas</button>
       <button class="menu-item" data-aba="calendario"><svg class="ic"><use href="#i-cal"/></svg>Calendário</button>
       <button class="menu-item" data-aba="campanhas"><svg class="ic"><use href="#i-camp"/></svg>Campanhas</button>
       <button class="menu-item" data-aba="checklist"><svg class="ic"><use href="#i-check"/></svg>Checklist</button>
+    </div>
+    <div class="menu-grupo">
+      <p>meu dinheiro</p>
+      <button class="menu-item" data-aba="financeiro"><svg class="ic"><use href="#i-dinheiro"/></svg>Financeiro</button>
     </div>
   </nav>
   <div class="rodape-menu">
@@ -285,6 +322,8 @@
   <section id="aba-calendario" data-painel="calendario" hidden></section>
   <section id="aba-campanhas" data-painel="campanhas" hidden></section>
   <section id="aba-checklist" data-painel="checklist" hidden></section>
+  <section id="aba-tarefas" data-painel="tarefas" hidden></section>
+  <section id="aba-financeiro" data-painel="financeiro" hidden></section>
 </main>
 
 <dialog id="modal" aria-labelledby="modal-titulo">
