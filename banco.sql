@@ -277,6 +277,48 @@ create policy "site registra clique" on public.cliques
   with check (video ~ '^[A-Za-z0-9_-]{11}$');
 
 
+-- ---------------------------------------------------------------------
+-- 8. FINANCEIRO E TAREFAS
+-- Campanhas ganham o mês em que a marca fechou e a marcação de permuta.
+-- "entradas" guarda o dinheiro que entrou na conta.
+-- "tarefas" guarda a lista do que fazer. Tudo só para você, logada.
+-- ---------------------------------------------------------------------
+alter table public.campanhas add column if not exists fechado_em date;
+alter table public.campanhas add column if not exists permuta boolean not null default false;
+
+create table if not exists public.entradas (
+  id           bigint generated always as identity primary key,
+  data         date not null,
+  valor        numeric(12, 2) not null check (valor >= 0),
+  descricao    text not null,
+  campanha_id  bigint references public.campanhas (id) on delete set null,
+  criado_em    timestamptz not null default now()
+);
+create index if not exists entradas_data_idx on public.entradas (data);
+
+create table if not exists public.tarefas (
+  id         bigint generated always as identity primary key,
+  texto      text not null,
+  grupo      text not null default 'Esta semana',
+  prazo      date,
+  feito      boolean not null default false,
+  feito_em   timestamptz,
+  ordem      integer not null default 0,
+  criado_em  timestamptz not null default now()
+);
+
+alter table public.entradas enable row level security;
+alter table public.tarefas  enable row level security;
+
+drop policy if exists "dona faz tudo" on public.entradas;
+create policy "dona faz tudo" on public.entradas
+  for all to authenticated using (public.eh_dona()) with check (public.eh_dona());
+
+drop policy if exists "dona faz tudo" on public.tarefas;
+create policy "dona faz tudo" on public.tarefas
+  for all to authenticated using (public.eh_dona()) with check (public.eh_dona());
+
+
 -- =====================================================================
 -- COMO TESTAR SE A TRANCA FUNCIONA
 -- Depois de rodar tudo acima, apague o conteúdo do editor, cole só
@@ -291,6 +333,8 @@ create policy "site registra clique" on public.cliques
 -- union all select 'visitas', count(*) from public.visitas
 -- union all select 'marcados', count(*) from public.marcados
 -- union all select 'cliques', count(*) from public.cliques
+-- union all select 'entradas', count(*) from public.entradas
+-- union all select 'tarefas', count(*) from public.tarefas
 -- union all select 'videos escondidos', count(*) from public.videos where visivel = false;
 -- rollback;
 --
