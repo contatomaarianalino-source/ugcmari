@@ -817,7 +817,35 @@
   const MESES_CURTOS = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
   const nomeMes = (i) => MESES[i].charAt(0).toUpperCase() + MESES[i].slice(1);
   const curto = (v) => (v >= 1000 ? `${(v / 1000).toFixed(1).replace(".", ",").replace(",0", "")}k` : String(Math.round(v)));
-  let entradas = [], aReceberFin = [], anoFin = new Date().getFullYear();
+  let entradas = [], aReceberFin = [], fixos = [], anoFin = new Date().getFullYear();
+  const chaveMes = (s) => String(s || "").slice(0, 7); /* "2026-08" */
+  const mesDeChave = (m) => { const [a, mm] = m.split("-").map(Number); return `${MESES[mm - 1].slice(0, 3)}/${a}`; };
+
+  /* Meses que um fixo cobre: do início até o mês atual (ou até o fim do contrato) */
+  function mesesDoFixo(f) {
+    const ini = deChave(f.inicio); if (!ini) return [];
+    const hoje = hojeData();
+    const ultimo = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+    const fim = f.fim ? deChave(f.fim) : null;
+    const meses = [];
+    for (let d = new Date(ini.getFullYear(), ini.getMonth(), 1); d <= ultimo && meses.length < 120; d.setMonth(d.getMonth() + 1)) {
+      if (fim && d > fim) break;
+      meses.push(`${d.getFullYear()}-${pad(d.getMonth() + 1)}`);
+    }
+    return meses;
+  }
+  /* Cada mês de fixo sem pagamento (ou pago só em parte) vira um item a receber */
+  function fixosEmAberto() {
+    const pago = {};
+    entradas.forEach((e) => { if (e.fixo_id) { const k = `${e.fixo_id}|${chaveMes(e.referente || e.data)}`; pago[k] = (pago[k] || 0) + (Number(e.valor) || 0); } });
+    const atual = chaveMes(chaveDia(hojeData()));
+    const abertos = [];
+    fixos.filter((f) => f.ativo !== false).forEach((f) => mesesDoFixo(f).forEach((m) => {
+      const falta = Math.round(((Number(f.valor) || 0) - (pago[`${f.id}|${m}`] || 0)) * 100) / 100;
+      if (falta > 0) abertos.push({ fixo: f, mes: m, falta, atrasado: m < atual });
+    }));
+    return abertos.sort((a, b) => a.mes.localeCompare(b.mes) || String(a.fixo.cliente).localeCompare(String(b.fixo.cliente)));
+  }
   /* "Gocase · 2 meses em aberto" com cliente "Gocase" vira só "2 meses em aberto" */
   const detalheCampanha = (c) => {
     const nome = String(c.campanha || ""), cliente = String(c.cliente || "");
@@ -827,11 +855,13 @@
 
   RENDER.financeiro = async function () {
     $("#aba-financeiro").innerHTML = `<p class="vazio">Carregando...</p>`;
-    const [ent, camp] = await Promise.all([
+    const [ent, camp, fx] = await Promise.all([
       ler("entradas", (q) => q.order("data", { ascending: false }).order("id", { ascending: false }).limit(5000)),
-      ler("campanhas", (q) => q.eq("pagamento", "pendente").order("fechado_em", { ascending: true }))
+      ler("campanhas", (q) => q.eq("pagamento", "pendente").order("fechado_em", { ascending: true })),
+      ler("fixos", (q) => q.order("cliente"))
     ]);
     entradas = ent.dados;
+    fixos = fx.dados;
     aReceberFin = camp.dados.filter((c) => !c.permuta && (Number(c.valor) || 0) > 0);
     desenharFinanceiro();
   };
@@ -855,8 +885,15 @@
     const somaMedia = mesesMedia > 0 ? porMes.slice(primeiro, ultimo + 1).reduce((s, v) => s + v, 0) : 0;
     const media = mesesMedia > 0 ? somaMedia / mesesMedia : 0;
     const melhor = porMes.reduce((b, v, i) => (v > porMes[b] ? i : b), 0);
-    const totalReceber = aReceberFin.reduce((s, c) => s + (Number(c.valor) || 0), 0);
+    const abertosFixos = fixosEmAberto();
+    const totalFixosAbertos = abertosFixos.reduce((s, a) => s + a.falta, 0);
+    const totalReceber = aReceberFin.reduce((s, c) => s + (Number(c.valor) || 0), 0) + totalFixosAbertos;
+    const ativos = fixos.filter((f) => f.ativo !== false);
+    const fixoPorMes = ativos.reduce((s, f) => s + (Number(f.valor) || 0), 0);
     const maxMes = Math.max(1, ...porMes);
+    const diaHoje = hoje.getDate();
+    const etiquetaFixo = (a) => a.atrasado ? `<span class="etiqueta et-atraso">atrasado</span>`
+      : (a.fixo.dia && diaHoje < a.fixo.dia ? `<span class="etiqueta et-perto">vence dia ${a.fixo.dia}</span>` : `<span class="etiqueta et-perto">este mês</span>`);
 
     el.innerHTML = `
       <div class="bloco-titulo">
@@ -871,7 +908,8 @@
         ${ehAnoAtual ? `<div><span>Recebido em ${MESES[mesHoje]}</span><strong>${dinheiro(porMes[mesHoje])}</strong><small>${mesHoje > 0 ? `${MESES[mesHoje - 1]}: ${dinheiro(porMes[mesHoje - 1])}` : "primeiro mês do ano"}</small></div>` : ""}
         <div><span>Média por mês</span><strong>${dinheiro(media)}</strong><small>${mesesMedia > 0 ? (mesesMedia === 1 ? `em ${MESES[primeiro]}` : `de ${MESES[primeiro]} a ${MESES[ultimo]}`) : "aparece com as entradas"}</small></div>
         <div><span>Melhor mês</span><strong>${totalAno > 0 ? nomeMes(melhor) : "Ainda sem entradas"}</strong>${totalAno > 0 ? `<small>${dinheiro(porMes[melhor])}</small>` : ""}</div>
-        <div class="destaque"><span>A receber</span><strong>${dinheiro(totalReceber)}</strong><small>${aReceberFin.length ? plural(aReceberFin.length, "marca", "marcas") : "nada pendente"}</small></div>
+        <div><span>Fixos por mês</span><strong>${dinheiro(fixoPorMes)}</strong><small>${ativos.length ? esc(ativos.map((f) => f.cliente).join(" e ")) : "nenhum fixo ainda"}</small></div>
+        <div class="destaque"><span>A receber</span><strong>${dinheiro(totalReceber)}</strong><small>${aReceberFin.length || abertosFixos.length ? `${plural(aReceberFin.length, "campanha", "campanhas")} e ${plural(abertosFixos.length, "mês de fixo", "meses de fixo")}` : "nada pendente"}</small></div>
       </div>
       <div class="grade-2 grade-fin bloco">
         <div class="cartao">
@@ -885,7 +923,12 @@
         </div>
         <div class="cartao">
           <div class="bloco-titulo"><h2>A receber</h2><strong class="valor-receber">${dinheiro(totalReceber)}</strong></div>
-          ${aReceberFin.length ? `<ul class="receber" id="lista-receber">${aReceberFin.map((c) => `
+          ${aReceberFin.length || abertosFixos.length ? `<ul class="receber" id="lista-receber">${abertosFixos.map((a, i) => `
+            <li>
+              <div><strong>${esc(a.fixo.cliente)}</strong><span class="suave">fixo mensal · ${mesDeChave(a.mes)}${a.falta < (Number(a.fixo.valor) || 0) ? " · falta uma parte" : ""}</span> ${etiquetaFixo(a)}</div>
+              <b>${dinheiro(a.falta)}</b>
+              <button class="btn claro" data-recebi-fixo="${i}">Recebi</button>
+            </li>`).join("")}${aReceberFin.map((c) => `
             <li>
               <div><strong>${esc(c.cliente || c.campanha)}</strong><span class="suave">${esc([detalheCampanha(c), c.fechado_em ? `fechada em ${mesAno(c.fechado_em)}` : ""].filter(Boolean).join(" · "))}</span></div>
               <b>${dinheiro(c.valor)}</b>
@@ -893,6 +936,20 @@
             </li>`).join("")}</ul>`
             : `<p class="vazio">Nada a receber. Tudo em dia!</p>`}
         </div>
+      </div>
+      <div class="cartao bloco">
+        <div class="bloco-titulo"><h2>Fixos mensais</h2><button class="btn claro" id="btn-novo-fixo">${icone("mais")}Novo fixo</button></div>
+        ${fixos.length ? `<ul class="receber" id="lista-fixos" style="max-height:none">${fixos.map((f) => {
+          const emAberto = abertosFixos.filter((a) => a.fixo.id === f.id);
+          const situacao = f.ativo === false ? `<span class="suave">pausado</span>`
+            : emAberto.some((a) => a.atrasado) ? `<span class="etiqueta et-atraso">${plural(emAberto.filter((a) => a.atrasado).length, "mês atrasado", "meses atrasados")}</span>`
+            : emAberto.length ? `<span class="etiqueta et-perto">falta o mês atual</span>` : `<span class="pilula p-pago">em dia</span>`;
+          return `<li class="clicavel" data-fixo="${f.id}" style="cursor:pointer">
+            <div><strong>${esc(f.cliente)}</strong><span class="suave">desde ${mesAno(f.inicio)}${f.dia ? ` · paga por volta do dia ${f.dia}` : ""}${f.fim ? ` · até ${mesAno(f.fim)}` : ""}</span></div>
+            <b>${dinheiro(f.valor)}/mês</b>
+            ${situacao}
+          </li>`;
+        }).join("")}</ul>` : `<p class="vazio">Cadastre aqui os contratos que pagam todo mês. Eles entram sozinhos em "A receber" a cada mês.</p>`}
       </div>
       <div class="bloco">
         <div class="bloco-titulo"><h2>Entradas de ${anoFin}</h2><span class="suave">Clique numa linha para editar ou apagar</span></div>
@@ -909,7 +966,7 @@
       if (!doMes.length) continue;
       linhas.push(`<tr class="mes-linha"><td colspan="2">${nomeMes(m)}</td><td class="num">${dinheiro(porMes[m])}</td></tr>`);
       doMes.sort((a, b) => String(b.data).localeCompare(String(a.data)) || b.id - a.id).forEach((e) => linhas.push(`
-        <tr class="clicavel" data-ent="${e.id}"><td style="white-space:nowrap">${dataBr(e.data)}</td><td>${esc(e.descricao)}</td><td class="num">${dinheiro(e.valor)}</td></tr>`));
+        <tr class="clicavel" data-ent="${e.id}"><td style="white-space:nowrap">${dataBr(e.data)}</td><td>${esc(e.descricao)}${e.fixo_id ? ` <span class="suave">· fixo de ${mesDeChave(chaveMes(e.referente || e.data))}</span>` : ""}</td><td class="num">${dinheiro(e.valor)}</td></tr>`));
     }
     $("#tabela-ent").innerHTML = linhas.length ? linhas.join("") : `<tr><td colspan="3"><p class="vazio">Nenhuma entrada em ${anoFin}. Clique em "Nova entrada" ou use o botão "Recebi" ao lado de uma marca.</p></td></tr>`;
 
@@ -925,9 +982,63 @@
     };
     const lista = $("#lista-receber");
     if (lista) lista.onclick = (ev) => {
+      const bf = ev.target.closest("[data-recebi-fixo]");
+      if (bf) { const a = abertosFixos[Number(bf.dataset.recebiFixo)]; if (a) formRecebiFixo(a); return; }
       const b = ev.target.closest("[data-recebi]"); if (!b) return;
       const c = aReceberFin.find((x) => x.id === Number(b.dataset.recebi)); if (c) formRecebi(c);
     };
+    $("#btn-novo-fixo").onclick = () => formFixo();
+    const listaFixos = $("#lista-fixos");
+    if (listaFixos) listaFixos.onclick = (ev) => {
+      const li = ev.target.closest("[data-fixo]"); if (!li) return;
+      const f = fixos.find((x) => x.id === Number(li.dataset.fixo)); if (f) formFixo(f);
+    };
+  }
+
+  /* "Recebi" de um fixo: a entrada fica ligada ao fixo e ao mês que ela paga */
+  function formRecebiFixo(a) {
+    abrirFormulario({
+      titulo: `Recebi de ${a.fixo.cliente}`,
+      valores: { data: chaveDia(hojeData()), valor: a.falta, referente: a.mes },
+      campos: [
+        { nome: "referente", rotulo: "Pagamento de qual mês", tipo: "month", obrigatorio: true },
+        { nome: "data", rotulo: "Quando entrou", tipo: "date", obrigatorio: true },
+        { nome: "valor", rotulo: "Quanto entrou (R$)", tipo: "number", passo: "0.01", obrigatorio: true, inteiro: true, ajuda: `O fixo é ${dinheiro(a.fixo.valor)} por mês. Se entrou só uma parte, o resto continua em "A receber".` }
+      ],
+      aoSalvar: async (d) => {
+        const recebido = Number(d.valor) || 0;
+        if (recebido <= 0) { toast("Coloque quanto entrou.", true); return false; }
+        const ok = await gravar("entradas", (t) => t.insert({ data: d.data, valor: recebido, descricao: a.fixo.cliente, fixo_id: a.fixo.id, referente: `${chaveMes(d.referente)}-01` }), "Lançado!");
+        if (ok) await RENDER.financeiro();
+        return ok;
+      }
+    });
+  }
+
+  function formFixo(f) {
+    const primeiroDoMes = (() => { const d = hojeData(); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-01`; })();
+    abrirFormulario({
+      titulo: f ? "Editar fixo mensal" : "Novo fixo mensal",
+      valores: f ? { ...f, dia: f.dia || "" } : { inicio: primeiroDoMes, ativo: true, valor: "", dia: "" },
+      campos: [
+        { nome: "cliente", rotulo: "Marca", obrigatorio: true, inteiro: true },
+        { nome: "valor", rotulo: "Valor por mês (R$)", tipo: "number", passo: "0.01", obrigatorio: true },
+        { nome: "dia", rotulo: "Dia em que costuma pagar", tipo: "number", ajuda: "Opcional, de 1 a 31" },
+        { nome: "inicio", rotulo: "Primeiro mês do contrato", tipo: "date", obrigatorio: true },
+        { nome: "fim", rotulo: "Último mês (se já tiver data para acabar)", tipo: "date" },
+        { nome: "ativo", rotulo: "Contrato ativo (desmarque para parar de cobrar)", tipo: "checkbox", inteiro: true }
+      ],
+      aoSalvar: async (d) => {
+        const dia = Math.round(Number(d.dia) || 0);
+        d.dia = dia >= 1 && dia <= 31 ? dia : null;
+        if (!(Number(d.valor) > 0)) { toast("Coloque o valor por mês.", true); return false; }
+        const ok = f ? await gravar("fixos", (t) => t.update(d).eq("id", f.id), "Fixo salvo")
+                     : await gravar("fixos", (t) => t.insert(d), "Fixo criado");
+        if (ok) await RENDER.financeiro();
+        return ok;
+      },
+      aoApagar: f ? async () => { const ok = await gravar("fixos", (t) => t.delete().eq("id", f.id), "Fixo apagado"); if (ok) await RENDER.financeiro(); return ok; } : null
+    });
   }
 
   function formEntrada(e) {
