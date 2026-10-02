@@ -341,6 +341,44 @@ alter table public.tarefas add column if not exists dia_mes smallint check (dia_
 -- Semanal com dia de entrega (0 domingo ... 3 quarta ... 6 sábado). Renova no dia seguinte.
 alter table public.tarefas add column if not exists dia_semana smallint check (dia_semana between 0 and 6);
 
+-- GASTOS: contas que se repetem (toda semana ou todo mês, com ou sem parcelas)
+create table if not exists public.gastos (
+  id          bigint generated always as identity primary key,
+  descricao   text not null,
+  valor       numeric(12, 2) not null check (valor >= 0),
+  frequencia  text not null default 'mensal' check (frequencia in ('semanal', 'mensal')),
+  dia_semana  smallint check (dia_semana between 0 and 6),
+  dia_mes     smallint check (dia_mes between 1 and 31),
+  inicio      date not null,
+  parcelas    integer check (parcelas >= 1),
+  fim         date,
+  variavel    boolean not null default false,
+  observacao  text,
+  ativo       boolean not null default true,
+  criado_em   timestamptz not null default now()
+);
+
+-- SAÍDAS: o que você pagou de verdade (ligado a um gasto fixo ou avulso)
+create table if not exists public.saidas (
+  id         bigint generated always as identity primary key,
+  data       date not null,
+  valor      numeric(12, 2) not null check (valor >= 0),
+  descricao  text not null,
+  gasto_id   bigint references public.gastos (id) on delete set null,
+  referente  date,
+  criado_em  timestamptz not null default now()
+);
+create index if not exists saidas_data_idx on public.saidas (data);
+
+alter table public.gastos enable row level security;
+alter table public.saidas enable row level security;
+drop policy if exists "dona faz tudo" on public.gastos;
+create policy "dona faz tudo" on public.gastos
+  for all to authenticated using (public.eh_dona()) with check (public.eh_dona());
+drop policy if exists "dona faz tudo" on public.saidas;
+create policy "dona faz tudo" on public.saidas
+  for all to authenticated using (public.eh_dona()) with check (public.eh_dona());
+
 alter table public.fixos enable row level security;
 drop policy if exists "dona faz tudo" on public.fixos;
 create policy "dona faz tudo" on public.fixos
