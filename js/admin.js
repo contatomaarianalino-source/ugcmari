@@ -817,7 +817,56 @@
   const MESES_CURTOS = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
   const nomeMes = (i) => MESES[i].charAt(0).toUpperCase() + MESES[i].slice(1);
   const curto = (v) => (v >= 1000 ? `${(v / 1000).toFixed(1).replace(".", ",").replace(",0", "")}k` : String(Math.round(v)));
-  let entradas = [], aReceberFin = [], fixos = [], anoFin = new Date().getFullYear();
+  let entradas = [], aReceberFin = [], fixos = [], gastos = [], saidas = [], anoFin = new Date().getFullYear();
+  let mesGastos = (() => { const d = hojeData(); d.setDate(1); return d; })();
+  const DIAS_CURTOS = ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"];
+
+  /* Datas em que um gasto fixo cai num mês (toda semana no dia escolhido, ou uma vez no mês) */
+  function ocorrenciasNoMes(g, ano, mes) {
+    if (g.ativo === false) return [];
+    const ini = deChave(g.inicio); if (!ini) return [];
+    const fim = g.fim ? deChave(g.fim) : null;
+    const ultimoDia = new Date(ano, mes + 1, 0).getDate();
+    const lista = [];
+    if (g.frequencia === "semanal") {
+      const ds = g.dia_semana === null || g.dia_semana === undefined ? 5 : Number(g.dia_semana);
+      for (let d = 1; d <= ultimoDia; d++) {
+        const dt = new Date(ano, mes, d);
+        if (dt.getDay() === ds && dt >= ini && (!fim || dt <= fim)) lista.push({ data: dt, parcela: null });
+      }
+    } else {
+      const indice = (ano - ini.getFullYear()) * 12 + (mes - ini.getMonth());
+      if (indice < 0 || (g.parcelas && indice >= g.parcelas)) return [];
+      const dt = new Date(ano, mes, Math.min(g.dia_mes || 1, ultimoDia));
+      if (fim && dt > fim) return [];
+      lista.push({ data: dt, parcela: g.parcelas ? indice + 1 : null });
+    }
+    return lista.map((o) => ({ ...o, gasto: g, chave: chaveDia(o.data) }));
+  }
+
+  /* Resumo de um mês: o que entrou, o que ainda entra dos fixos, os gastos e a sobra */
+  function resumoMes(ano, mes) {
+    const chave = `${ano}-${pad(mes + 1)}`;
+    const soma = (lista, f) => lista.reduce((s, x) => s + (Number(f(x)) || 0), 0);
+    const recebido = soma(entradas.filter((e) => chaveMes(e.data) === chave), (e) => e.valor);
+    /* Mês atual ou passado: o que ainda falta dos fixos. Mês futuro: o valor cheio dos fixos ativos */
+    const fixosAReceber = chave > chaveMes(chaveDia(hojeData()))
+      ? soma(fixos.filter((f) => f.ativo !== false && chaveMes(f.inicio) <= chave && (!f.fim || chaveMes(f.fim) >= chave)), (f) => f.valor)
+      : soma(fixosEmAberto().filter((a) => a.mes === chave), (a) => a.falta);
+    const pagoPor = {};
+    saidas.forEach((s) => { if (s.gasto_id && s.referente) { const k = `${s.gasto_id}|${String(s.referente).slice(0, 10)}`; pagoPor[k] = (pagoPor[k] || 0) + (Number(s.valor) || 0); } });
+    const contas = gastos.flatMap((g) => ocorrenciasNoMes(g, ano, mes)).map((o) => {
+      const pago = pagoPor[`${o.gasto.id}|${o.chave}`] || 0;
+      return { ...o, pago, considerado: pago > 0 ? pago : Number(o.gasto.valor) || 0 };
+    }).sort((a, b) => a.data - b.data || String(a.gasto.descricao).localeCompare(String(b.gasto.descricao)));
+    const avulsas = saidas.filter((s) => !s.gasto_id && chaveMes(s.data) === chave).sort((a, b) => String(a.data).localeCompare(String(b.data)));
+    const gastosMes = soma(contas, (c) => c.considerado) + soma(avulsas, (s) => s.valor);
+    const jaPago = soma(contas, (c) => c.pago) + soma(avulsas, (s) => s.valor);
+    return { chave, recebido, fixosAReceber, contas, avulsas, gastosMes, jaPago, sobra: recebido + fixosAReceber - gastosMes };
+  }
+  const textoGasto = (g) => g.frequencia === "semanal"
+    ? `toda ${DIAS_SEMANA[g.dia_semana === null || g.dia_semana === undefined ? 5 : Number(g.dia_semana)]}`
+    : `todo mês${g.dia_mes ? `, dia ${g.dia_mes}` : ""}${g.parcelas ? ` · ${g.parcelas} parcelas, de ${mesAno(g.inicio)} a ${(() => { const d = deChave(g.inicio); d.setMonth(d.getMonth() + g.parcelas - 1); return mesAno(chaveDia(d)); })()}` : ""}`;
   const chaveMes = (s) => String(s || "").slice(0, 7); /* "2026-08" */
   const mesDeChave = (m) => { const [a, mm] = m.split("-").map(Number); return `${MESES[mm - 1].slice(0, 3)}/${a}`; };
 
@@ -855,13 +904,17 @@
 
   RENDER.financeiro = async function () {
     $("#aba-financeiro").innerHTML = `<p class="vazio">Carregando...</p>`;
-    const [ent, camp, fx] = await Promise.all([
+    const [ent, camp, fx, gs, sd] = await Promise.all([
       ler("entradas", (q) => q.order("data", { ascending: false }).order("id", { ascending: false }).limit(5000)),
       ler("campanhas", (q) => q.eq("pagamento", "pendente").order("fechado_em", { ascending: true })),
-      ler("fixos", (q) => q.order("cliente"))
+      ler("fixos", (q) => q.order("cliente")),
+      ler("gastos", (q) => q.order("id")),
+      ler("saidas", (q) => q.order("data", { ascending: false }).order("id", { ascending: false }).limit(5000))
     ]);
     entradas = ent.dados;
     fixos = fx.dados;
+    gastos = gs.dados;
+    saidas = sd.dados;
     aReceberFin = camp.dados.filter((c) => !c.permuta && (Number(c.valor) || 0) > 0);
     desenharFinanceiro();
   };
@@ -892,6 +945,19 @@
     const fixoPorMes = ativos.reduce((s, f) => s + (Number(f.valor) || 0), 0);
     const maxMes = Math.max(1, ...porMes);
     const diaHoje = hoje.getDate();
+    const resumoAtual = resumoMes(anoHoje, mesHoje);
+    const rg = resumoMes(mesGastos.getFullYear(), mesGastos.getMonth());
+    const nomeMesGastos = MESES[mesGastos.getMonth()];
+    const totalCampanhasPend = aReceberFin.reduce((s, c) => s + (Number(c.valor) || 0), 0);
+    const hojeChave = chaveDia(hoje);
+    const etiquetaConta = (c) => {
+      if (c.pago > 0) return `<span class="pilula p-pago">pago</span>`;
+      const d = diasAte(c.chave);
+      if (d < 0) return `<span class="etiqueta et-atraso">venceu</span>`;
+      if (d === 0) return `<span class="etiqueta et-perto">hoje</span>`;
+      if (d <= 3) return `<span class="etiqueta et-perto">em ${plural(d, "dia", "dias")}</span>`;
+      return "";
+    };
     /* Mês atual: depois do dia de vencimento sem pagamento, também conta como atrasado */
     const vencido = (a) => a.atrasado || (!!a.fixo.dia && diaHoje > a.fixo.dia);
     const etiquetaFixo = (a) => {
@@ -914,7 +980,7 @@
         <div><span>Recebido em ${anoFin}</span><strong>${dinheiro(totalAno)}</strong><small>${plural(doAno.length, "entrada", "entradas")}</small></div>
         ${ehAnoAtual ? `<div><span>Recebido em ${MESES[mesHoje]}</span><strong>${dinheiro(porMes[mesHoje])}</strong><small>${mesHoje > 0 ? `${MESES[mesHoje - 1]}: ${dinheiro(porMes[mesHoje - 1])}` : "primeiro mês do ano"}</small></div>` : ""}
         <div><span>Média por mês</span><strong>${dinheiro(media)}</strong><small>${mesesMedia > 0 ? (mesesMedia === 1 ? `em ${MESES[primeiro]}` : `de ${MESES[primeiro]} a ${MESES[ultimo]}`) : "aparece com as entradas"}</small></div>
-        <div><span>Melhor mês</span><strong>${totalAno > 0 ? nomeMes(melhor) : "Ainda sem entradas"}</strong>${totalAno > 0 ? `<small>${dinheiro(porMes[melhor])}</small>` : ""}</div>
+        <div><span>Sobra prevista em ${MESES[mesHoje]}</span><strong class="${resumoAtual.sobra < 0 ? "txt-alerta" : ""}">${dinheiro(resumoAtual.sobra)}</strong><small>gastos do mês: ${dinheiro(resumoAtual.gastosMes)}</small></div>
         <div><span>Fixos por mês</span><strong>${dinheiro(fixoPorMes)}</strong><small>${ativos.length ? esc(ativos.map((f) => f.cliente).join(" e ")) : "nenhum fixo ainda"}</small></div>
         <div class="destaque"><span>A receber</span><strong>${dinheiro(totalReceber)}</strong><small>${aReceberFin.length || abertosFixos.length ? `${plural(aReceberFin.length, "campanha", "campanhas")} e ${plural(abertosFixos.length, "mês de fixo", "meses de fixo")}` : "nada pendente"}</small></div>
       </div>
@@ -944,6 +1010,50 @@
             : `<p class="vazio">Nada a receber. Tudo em dia!</p>`}
         </div>
       </div>
+      <div class="bloco-titulo secao-gastos">
+        <h2>Gastos e quanto sobra</h2>
+        <div class="ferramentas">
+          <button class="icone-btn" id="g-ant" aria-label="Mês anterior">${icone("seta-e")}</button>
+          <span class="cal-mes">${nomeMesGastos} ${mesGastos.getFullYear()}</span>
+          <button class="icone-btn" id="g-prox" aria-label="Próximo mês">${icone("seta-d")}</button>
+          <button class="btn claro" id="btn-nova-saida">${icone("mais")}Gasto avulso</button>
+        </div>
+      </div>
+      <div class="grade-2 grade-fin bloco">
+        <div class="cartao">
+          <div class="bloco-titulo"><h2>Contas de ${nomeMesGastos}</h2><strong class="valor-receber">${dinheiro(rg.gastosMes)}</strong></div>
+          ${rg.contas.length || rg.avulsas.length ? `<ul class="receber" id="lista-contas" style="max-height:420px">${rg.contas.map((c, i) => `
+            <li>
+              <div><strong>${esc(c.gasto.descricao)}</strong><span class="suave">${DIAS_CURTOS[c.data.getDay()]} ${dataBr(c.chave)}${c.parcela ? ` · parcela ${c.parcela} de ${c.gasto.parcelas}` : ""}${c.gasto.variavel && !c.pago ? " · estimativa" : ""}</span> ${etiquetaConta(c)}</div>
+              <b>${dinheiro(c.considerado)}</b>
+              ${c.pago > 0 ? `<span></span>` : `<button class="btn claro" data-paguei="${i}">Paguei</button>`}
+            </li>`).join("")}${rg.avulsas.map((s) => `
+            <li class="clicavel" data-saida="${s.id}" style="cursor:pointer">
+              <div><strong>${esc(s.descricao)}</strong><span class="suave">${dataBr(s.data)} · avulso</span> <span class="pilula p-pago">pago</span></div>
+              <b>${dinheiro(s.valor)}</b><span></span>
+            </li>`).join("")}</ul>`
+            : `<p class="vazio">Nenhuma conta em ${nomeMesGastos}. Cadastre os gastos fixos lá embaixo.</p>`}
+        </div>
+        <div class="cartao">
+          <div class="bloco-titulo"><h2>Quanto sobra em ${nomeMesGastos}</h2></div>
+          <ul class="conta-resumo">
+            <li><span>Já entrou no mês</span><b>${dinheiro(rg.recebido)}</b></li>
+            <li><span>Fixos que ainda vão entrar</span><b>${dinheiro(rg.fixosAReceber)}</b></li>
+            <li><span>Gastos do mês</span><b class="neg">- ${dinheiro(rg.gastosMes)}</b></li>
+            <li class="total"><span>Sobra prevista</span><b class="${rg.sobra < 0 ? "neg" : "pos"}">${dinheiro(rg.sobra)}</b></li>
+          </ul>
+          <p class="suave" style="margin:10px 0 0">Já pago: ${dinheiro(rg.jaPago)} de ${dinheiro(rg.gastosMes)}.${totalCampanhasPend > 0 ? ` Se as campanhas pendentes pagarem, entram mais ${dinheiro(totalCampanhasPend)}.` : ""}</p>
+        </div>
+      </div>
+      <div class="cartao bloco">
+        <div class="bloco-titulo"><h2>Gastos fixos</h2><button class="btn claro" id="btn-novo-gasto">${icone("mais")}Novo gasto</button></div>
+        ${gastos.length ? `<ul class="receber" id="lista-gastos" style="max-height:none">${gastos.map((g) => `
+          <li class="clicavel" data-gasto="${g.id}" style="cursor:pointer">
+            <div><strong>${esc(g.descricao)}</strong><span class="suave">${esc(textoGasto(g))}${g.variavel ? " · valor muda, é uma estimativa" : ""}${g.observacao ? ` · ${esc(g.observacao)}` : ""}</span></div>
+            <b>${dinheiro(g.valor)}</b>
+            ${g.ativo === false ? `<span class="suave">pausado</span>` : `<span></span>`}
+          </li>`).join("")}</ul>` : `<p class="vazio">Cadastre aqui as contas que se repetem (toda semana ou todo mês). Elas aparecem sozinhas em "Contas do mês".</p>`}
+      </div>
       <div class="cartao bloco">
         <div class="bloco-titulo"><h2>Fixos mensais</h2><button class="btn claro" id="btn-novo-fixo">${icone("mais")}Novo fixo</button></div>
         ${fixos.length ? `<ul class="receber" id="lista-fixos" style="max-height:none">${fixos.map((f) => {
@@ -964,7 +1074,46 @@
           <thead><tr><th>Data</th><th>De onde veio</th><th class="num">Valor</th></tr></thead>
           <tbody id="tabela-ent"></tbody>
         </table></div>
+      </div>
+      <div class="bloco">
+        <div class="bloco-titulo"><h2>Saídas de ${anoFin}</h2><span class="suave">O que você já pagou. Clique numa linha para editar ou apagar</span></div>
+        <div class="tabela-caixa"><table>
+          <thead><tr><th>Data</th><th>Gasto</th><th class="num">Valor</th></tr></thead>
+          <tbody id="tabela-saidas"></tbody>
+        </table></div>
       </div>`;
+
+    /* Tabela de saídas, agrupada por mês */
+    const saidasAno = saidas.filter((s) => String(s.data).startsWith(String(anoFin)));
+    const linhasS = [];
+    for (let m = 11; m >= 0; m--) {
+      const doMes = saidasAno.filter((s) => Number(String(s.data).slice(5, 7)) - 1 === m);
+      if (!doMes.length) continue;
+      linhasS.push(`<tr class="mes-linha"><td colspan="2">${nomeMes(m)}</td><td class="num">${dinheiro(doMes.reduce((t, s) => t + (Number(s.valor) || 0), 0))}</td></tr>`);
+      doMes.sort((a, b) => String(b.data).localeCompare(String(a.data)) || b.id - a.id).forEach((s) => linhasS.push(`
+        <tr class="clicavel" data-saida="${s.id}"><td style="white-space:nowrap">${dataBr(s.data)}</td><td>${esc(s.descricao)}</td><td class="num">${dinheiro(s.valor)}</td></tr>`));
+    }
+    $("#tabela-saidas").innerHTML = linhasS.length ? linhasS.join("") : `<tr><td colspan="3"><p class="vazio">Nenhuma saída lançada em ${anoFin}. Use o botão "Paguei" nas contas do mês.</p></td></tr>`;
+    $("#tabela-saidas").onclick = (ev) => {
+      const tr = ev.target.closest("tr[data-saida]"); if (!tr) return;
+      const s = saidas.find((x) => x.id === Number(tr.dataset.saida)); if (s) formSaida(s);
+    };
+    $("#g-ant").onclick = () => { mesGastos = new Date(mesGastos.getFullYear(), mesGastos.getMonth() - 1, 1); desenharFinanceiro(); };
+    $("#g-prox").onclick = () => { mesGastos = new Date(mesGastos.getFullYear(), mesGastos.getMonth() + 1, 1); desenharFinanceiro(); };
+    $("#btn-nova-saida").onclick = () => formSaida();
+    $("#btn-novo-gasto").onclick = () => formGasto();
+    const listaContas = $("#lista-contas");
+    if (listaContas) listaContas.onclick = (ev) => {
+      const b = ev.target.closest("[data-paguei]");
+      if (b) { const c = rg.contas[Number(b.dataset.paguei)]; if (c) formPaguei(c); return; }
+      const li = ev.target.closest("[data-saida]");
+      if (li) { const s = saidas.find((x) => x.id === Number(li.dataset.saida)); if (s) formSaida(s); }
+    };
+    const listaGastos = $("#lista-gastos");
+    if (listaGastos) listaGastos.onclick = (ev) => {
+      const li = ev.target.closest("[data-gasto]"); if (!li) return;
+      const g = gastos.find((x) => x.id === Number(li.dataset.gasto)); if (g) formGasto(g);
+    };
 
     /* Tabela de entradas, agrupada por mês (mais recente primeiro) */
     const linhas = [];
@@ -1000,6 +1149,82 @@
       const li = ev.target.closest("[data-fixo]"); if (!li) return;
       const f = fixos.find((x) => x.id === Number(li.dataset.fixo)); if (f) formFixo(f);
     };
+  }
+
+  /* "Paguei": lança a saída ligada à conta daquele dia */
+  function formPaguei(c) {
+    const g = c.gasto;
+    abrirFormulario({
+      titulo: `Paguei: ${g.descricao}`,
+      valores: { data: c.chave <= chaveDia(hojeData()) ? c.chave : chaveDia(hojeData()), valor: Number(g.valor) || 0 },
+      campos: [
+        { nome: "data", rotulo: "Quando pagou", tipo: "date", obrigatorio: true },
+        { nome: "valor", rotulo: "Quanto pagou (R$)", tipo: "number", passo: "0.01", obrigatorio: true,
+          ajuda: g.variavel ? `O valor muda. ${g.observacao ? g.observacao + "." : ""} Coloque o valor de verdade desta vez.` : `Conta de ${dataBr(c.chave)}${c.parcela ? `, parcela ${c.parcela} de ${g.parcelas}` : ""}.` }
+      ],
+      aoSalvar: async (d) => {
+        const valor = Number(d.valor) || 0;
+        if (valor <= 0) { toast("Coloque quanto pagou.", true); return false; }
+        const descricao = `${g.descricao}${c.parcela ? ` · parcela ${c.parcela} de ${g.parcelas}` : ""}`;
+        const ok = await gravar("saidas", (t) => t.insert({ data: d.data, valor, descricao, gasto_id: g.id, referente: c.chave }), "Pagamento lançado");
+        if (ok) await RENDER.financeiro();
+        return ok;
+      }
+    });
+  }
+
+  function formSaida(s) {
+    abrirFormulario({
+      titulo: s ? "Editar saída" : "Gasto avulso",
+      valores: s || { data: chaveDia(hojeData()), valor: "" },
+      campos: [
+        { nome: "descricao", rotulo: "Com o que gastou", obrigatorio: true, inteiro: true },
+        { nome: "data", rotulo: "Data", tipo: "date", obrigatorio: true },
+        { nome: "valor", rotulo: "Valor (R$)", tipo: "number", passo: "0.01", obrigatorio: true }
+      ],
+      aoSalvar: async (d) => {
+        if (!(Number(d.valor) > 0)) { toast("Coloque o valor.", true); return false; }
+        const ok = s ? await gravar("saidas", (t) => t.update(d).eq("id", s.id), "Saída salva")
+                     : await gravar("saidas", (t) => t.insert(d), "Gasto lançado");
+        if (ok) await RENDER.financeiro();
+        return ok;
+      },
+      aoApagar: s ? async () => { const ok = await gravar("saidas", (t) => t.delete().eq("id", s.id), "Saída apagada"); if (ok) await RENDER.financeiro(); return ok; } : null
+    });
+  }
+
+  function formGasto(g) {
+    abrirFormulario({
+      titulo: g ? "Editar gasto fixo" : "Novo gasto fixo",
+      valores: g ? { ...g, dia_semana: g.dia_semana === null || g.dia_semana === undefined ? "" : String(g.dia_semana), dia_mes: g.dia_mes || "", parcelas: g.parcelas || "" }
+                 : { frequencia: "mensal", inicio: chaveDia(hojeData()), ativo: true, valor: "", dia_semana: "", dia_mes: "", parcelas: "" },
+      campos: [
+        { nome: "descricao", rotulo: "O que é", obrigatorio: true, inteiro: true, ajuda: "Ex.: Personal, babá, parcela das fotos" },
+        { nome: "valor", rotulo: "Valor (R$)", tipo: "number", passo: "0.01", obrigatorio: true },
+        { nome: "frequencia", rotulo: "Repete", tipo: "select", opcoes: [["mensal", "Todo mês"], ["semanal", "Toda semana"]] },
+        { nome: "dia_semana", rotulo: "Se for toda semana, qual dia", tipo: "select", opcoes: [["", "Escolha"]].concat(DIAS_SEMANA.map((n, i) => [String(i), n.charAt(0).toUpperCase() + n.slice(1)])) },
+        { nome: "dia_mes", rotulo: "Se for todo mês, qual dia", tipo: "number", ajuda: "De 1 a 31" },
+        { nome: "inicio", rotulo: "A partir de", tipo: "date", obrigatorio: true },
+        { nome: "parcelas", rotulo: "Quantas parcelas (se tiver)", tipo: "number", ajuda: "Deixe vazio se não acaba" },
+        { nome: "observacao", rotulo: "Anotação", inteiro: true },
+        { nome: "variavel", rotulo: "O valor muda toda vez (o valor acima é uma estimativa)", tipo: "checkbox", inteiro: true },
+        { nome: "ativo", rotulo: "Gasto ativo (desmarque para parar)", tipo: "checkbox", inteiro: true }
+      ],
+      aoSalvar: async (d) => {
+        if (!(Number(d.valor) > 0)) { toast("Coloque o valor.", true); return false; }
+        const dm = Math.round(Number(d.dia_mes) || 0), pc = Math.round(Number(d.parcelas) || 0);
+        d.dia_mes = dm >= 1 && dm <= 31 ? dm : null;
+        d.parcelas = pc >= 1 ? pc : null;
+        d.dia_semana = d.dia_semana === null || d.dia_semana === "" ? null : Number(d.dia_semana);
+        if (d.frequencia === "semanal" && d.dia_semana === null) { toast("Escolha o dia da semana.", true); return false; }
+        if (d.frequencia === "semanal") { d.dia_mes = null; d.parcelas = null; } else d.dia_semana = null;
+        const ok = g ? await gravar("gastos", (t) => t.update(d).eq("id", g.id), "Gasto salvo")
+                     : await gravar("gastos", (t) => t.insert(d), "Gasto criado");
+        if (ok) await RENDER.financeiro();
+        return ok;
+      },
+      aoApagar: g ? async () => { const ok = await gravar("gastos", (t) => t.delete().eq("id", g.id), "Gasto apagado"); if (ok) await RENDER.financeiro(); return ok; } : null
+    });
   }
 
   /* "Recebi" de um fixo: a entrada fica ligada ao fixo e ao mês que ela paga */
