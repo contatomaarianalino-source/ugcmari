@@ -892,8 +892,15 @@
     const fixoPorMes = ativos.reduce((s, f) => s + (Number(f.valor) || 0), 0);
     const maxMes = Math.max(1, ...porMes);
     const diaHoje = hoje.getDate();
-    const etiquetaFixo = (a) => a.atrasado ? `<span class="etiqueta et-atraso">atrasado</span>`
-      : (a.fixo.dia && diaHoje < a.fixo.dia ? `<span class="etiqueta et-perto">vence dia ${a.fixo.dia}</span>` : `<span class="etiqueta et-perto">este mês</span>`);
+    /* Mês atual: depois do dia de vencimento sem pagamento, também conta como atrasado */
+    const vencido = (a) => a.atrasado || (!!a.fixo.dia && diaHoje > a.fixo.dia);
+    const etiquetaFixo = (a) => {
+      if (a.atrasado) return `<span class="etiqueta et-atraso">atrasado</span>`;
+      if (a.fixo.dia && diaHoje > a.fixo.dia) return `<span class="etiqueta et-atraso">venceu dia ${a.fixo.dia}</span>`;
+      if (a.fixo.dia && diaHoje === a.fixo.dia) return `<span class="etiqueta et-perto">vence hoje</span>`;
+      if (a.fixo.dia) return `<span class="etiqueta et-perto">vence dia ${a.fixo.dia}</span>`;
+      return `<span class="etiqueta et-perto">este mês</span>`;
+    };
 
     el.innerHTML = `
       <div class="bloco-titulo">
@@ -942,10 +949,10 @@
         ${fixos.length ? `<ul class="receber" id="lista-fixos" style="max-height:none">${fixos.map((f) => {
           const emAberto = abertosFixos.filter((a) => a.fixo.id === f.id);
           const situacao = f.ativo === false ? `<span class="suave">pausado</span>`
-            : emAberto.some((a) => a.atrasado) ? `<span class="etiqueta et-atraso">${plural(emAberto.filter((a) => a.atrasado).length, "mês atrasado", "meses atrasados")}</span>`
-            : emAberto.length ? `<span class="etiqueta et-perto">falta o mês atual</span>` : `<span class="pilula p-pago">em dia</span>`;
+            : emAberto.some(vencido) ? `<span class="etiqueta et-atraso">${plural(emAberto.filter(vencido).length, "mês atrasado", "meses atrasados")}</span>`
+            : emAberto.length ? `<span class="etiqueta et-perto">${f.dia ? `vence dia ${f.dia}` : "falta o mês atual"}</span>` : `<span class="pilula p-pago">em dia</span>`;
           return `<li class="clicavel" data-fixo="${f.id}" style="cursor:pointer">
-            <div><strong>${esc(f.cliente)}</strong><span class="suave">desde ${mesAno(f.inicio)}${f.dia ? ` · paga por volta do dia ${f.dia}` : ""}${f.fim ? ` · até ${mesAno(f.fim)}` : ""}</span></div>
+            <div><strong>${esc(f.cliente)}</strong><span class="suave">desde ${mesAno(f.inicio)}${f.dia ? ` · vence todo dia ${f.dia}` : ""}${f.fim ? ` · até ${mesAno(f.fim)}` : ""}</span></div>
             <b>${dinheiro(f.valor)}/mês</b>
             ${situacao}
           </li>`;
@@ -1023,7 +1030,7 @@
       campos: [
         { nome: "cliente", rotulo: "Marca", obrigatorio: true, inteiro: true },
         { nome: "valor", rotulo: "Valor por mês (R$)", tipo: "number", passo: "0.01", obrigatorio: true },
-        { nome: "dia", rotulo: "Dia em que costuma pagar", tipo: "number", ajuda: "Opcional, de 1 a 31" },
+        { nome: "dia", rotulo: "Dia do vencimento", tipo: "number", ajuda: "Opcional, de 1 a 31. Depois desse dia, o mês aparece como atrasado." },
         { nome: "inicio", rotulo: "Primeiro mês do contrato", tipo: "date", obrigatorio: true },
         { nome: "fim", rotulo: "Último mês (se já tiver data para acabar)", tipo: "date" },
         { nome: "ativo", rotulo: "Contrato ativo (desmarque para parar de cobrar)", tipo: "checkbox", inteiro: true }
