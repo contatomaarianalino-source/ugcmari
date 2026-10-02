@@ -1109,11 +1109,23 @@
     const d = noMes(h.getFullYear(), h.getMonth());
     return h >= d ? d : noMes(h.getFullYear(), h.getMonth() - 1);
   };
+  /* Semanal com dia de entrega: o ciclo começa no dia seguinte à última entrega
+     (entrega na quarta = ciclo de quinta a quarta). Sem dia, começa na segunda. */
+  const DIAS_SEMANA = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"];
+  const temDiaSemana = (t) => t.dia_semana !== null && t.dia_semana !== undefined && t.dia_semana !== "";
+  const inicioSemanaDe = (t) => {
+    if (!temDiaSemana(t)) return inicioSemana();
+    const h = hojeData();
+    const comeco = (Number(t.dia_semana) + 1) % 7;
+    const d = new Date(h); d.setDate(h.getDate() - ((h.getDay() - comeco + 7) % 7));
+    return d;
+  };
+  const entregaDaSemana = (t) => { const d = inicioSemanaDe(t); d.setDate(d.getDate() + 6); return d; };
   const tarefaFeita = (t) => {
     const rep = repeticao(t);
     if (!rep) return !!t.feito;
     if (!t.feito || !t.feito_em) return false;
-    return new Date(t.feito_em) >= (rep === "semanal" ? inicioSemana() : inicioCiclo(t.dia_mes));
+    return new Date(t.feito_em) >= (rep === "semanal" ? inicioSemanaDe(t) : inicioCiclo(t.dia_mes));
   };
 
   RENDER.tarefas = async function () {
@@ -1208,6 +1220,14 @@
       else prazo = `<span class="suave">${dataBr(t.prazo)}</span>`;
     } else if (repeticao(t) === "mensal") {
       prazo = `<span class="suave">renova todo dia ${t.dia_mes || 1}</span>`;
+    } else if (repeticao(t) === "semanal" && temDiaSemana(t)) {
+      const entrega = entregaDaSemana(t);
+      const d = Math.round((entrega - hojeData()) / 86400000);
+      const nomeDia = DIAS_SEMANA[Number(t.dia_semana)];
+      if (feita) { const prox = new Date(entrega); prox.setDate(prox.getDate() + 7); prazo = `<span class="suave">próxima: ${nomeDia} ${dataBr(chaveDia(prox))}</span>`; }
+      else if (d === 0) prazo = `<span class="etiqueta et-perto">entrega hoje</span>`;
+      else if (d <= 3) prazo = `<span class="etiqueta et-perto">${nomeDia}, em ${plural(d, "dia", "dias")}</span>`;
+      else prazo = `<span class="suave">entrega ${nomeDia} ${dataBr(chaveDia(entrega))}</span>`;
     } else if (repeticao(t) === "semanal") {
       prazo = `<span class="suave">renova na segunda</span>`;
     }
@@ -1222,17 +1242,19 @@
   function formTarefa(t, grupos) {
     abrirFormulario({
       titulo: "Editar tarefa",
-      valores: { texto: t.texto, grupo: t.grupo, prazo: t.prazo ? String(t.prazo).slice(0, 10) : "", repete: repeticao(t) || "", dia_mes: t.dia_mes || "" },
+      valores: { texto: t.texto, grupo: t.grupo, prazo: t.prazo ? String(t.prazo).slice(0, 10) : "", repete: repeticao(t) || "", dia_mes: t.dia_mes || "", dia_semana: temDiaSemana(t) ? String(t.dia_semana) : "" },
       campos: [
         { nome: "texto", rotulo: "Tarefa", obrigatorio: true, inteiro: true },
         { nome: "grupo", rotulo: "Grupo", obrigatorio: true, lista: grupos, ajuda: "Escolha um grupo ou escreva um novo" },
         { nome: "prazo", rotulo: "Prazo", tipo: "date" },
         { nome: "repete", rotulo: "Repete", tipo: "select", opcoes: [["", "Não repete"], ["semanal", "Toda semana (volta na segunda)"], ["mensal", "Todo mês"]] },
+        { nome: "dia_semana", rotulo: "Se for toda semana, o dia da entrega", tipo: "select", opcoes: [["", "Sem dia (volta na segunda)"]].concat(DIAS_SEMANA.map((n, i) => [String(i), n.charAt(0).toUpperCase() + n.slice(1)])) },
         { nome: "dia_mes", rotulo: "Se for todo mês, volta no dia", tipo: "number", ajuda: "De 1 a 31" }
       ],
       aoSalvar: async (d) => {
         const dia = Math.round(Number(d.dia_mes) || 0);
         d.dia_mes = d.repete === "mensal" ? (dia >= 1 && dia <= 31 ? dia : 1) : null;
+        d.dia_semana = d.repete === "semanal" && d.dia_semana !== null && d.dia_semana !== "" ? Number(d.dia_semana) : null;
         const ok = await gravar("tarefas", (q) => q.update(d).eq("id", t.id), "Tarefa salva");
         if (ok) await RENDER.tarefas();
         return ok;
