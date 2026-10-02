@@ -332,6 +332,12 @@ create table if not exists public.fixos (
 );
 alter table public.entradas add column if not exists fixo_id bigint references public.fixos (id) on delete set null;
 alter table public.entradas add column if not exists referente date;
+-- O que você entrega para o fixo todo mês (ex.: 4 vídeos e 5 stories)
+alter table public.fixos add column if not exists entrega text;
+
+-- Tarefas que se repetem: toda semana (volta na segunda) ou todo mês (volta no dia escolhido)
+alter table public.tarefas add column if not exists repete text check (repete in ('semanal', 'mensal'));
+alter table public.tarefas add column if not exists dia_mes smallint check (dia_mes between 1 and 31);
 
 alter table public.fixos enable row level security;
 drop policy if exists "dona faz tudo" on public.fixos;
