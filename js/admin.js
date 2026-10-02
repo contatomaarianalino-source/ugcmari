@@ -855,15 +855,21 @@
       : soma(fixosEmAberto().filter((a) => a.mes === chave), (a) => a.falta);
     const pagoPor = {};
     saidas.forEach((s) => { if (s.gasto_id && s.referente) { const k = `${s.gasto_id}|${String(s.referente).slice(0, 10)}`; pagoPor[k] = (pagoPor[k] || 0) + (Number(s.valor) || 0); } });
+    /* Gasto que muda de valor e está sem valor cadastrado (ex.: babá): fica "a definir" até você lançar o pagamento */
     const contas = gastos.flatMap((g) => ocorrenciasNoMes(g, ano, mes)).map((o) => {
       const pago = pagoPor[`${o.gasto.id}|${o.chave}`] || 0;
-      return { ...o, pago, considerado: pago > 0 ? pago : Number(o.gasto.valor) || 0 };
+      const aDefinir = !pago && aDefinirGasto(o.gasto);
+      return { ...o, pago, aDefinir, considerado: pago > 0 ? pago : aDefinir ? 0 : Number(o.gasto.valor) || 0 };
     }).sort((a, b) => a.data - b.data || String(a.gasto.descricao).localeCompare(String(b.gasto.descricao)));
+    const aDefinirPorNome = {};
+    contas.filter((c) => c.aDefinir).forEach((c) => { aDefinirPorNome[c.gasto.descricao] = (aDefinirPorNome[c.gasto.descricao] || 0) + 1; });
     const avulsas = saidas.filter((s) => !s.gasto_id && chaveMes(s.data) === chave).sort((a, b) => String(a.data).localeCompare(String(b.data)));
     const gastosMes = soma(contas, (c) => c.considerado) + soma(avulsas, (s) => s.valor);
     const jaPago = soma(contas, (c) => c.pago) + soma(avulsas, (s) => s.valor);
-    return { chave, recebido, fixosAReceber, contas, avulsas, gastosMes, jaPago, sobra: recebido + fixosAReceber - gastosMes };
+    const aDefinir = Object.entries(aDefinirPorNome).map(([nome, n]) => `${nome} (${n}x a definir)`);
+    return { chave, recebido, fixosAReceber, contas, avulsas, gastosMes, jaPago, aDefinir, sobra: recebido + fixosAReceber - gastosMes };
   }
+  const aDefinirGasto = (g) => !!g.variavel && !(Number(g.valor) > 0);
   const textoGasto = (g) => g.frequencia === "semanal"
     ? `toda ${DIAS_SEMANA[g.dia_semana === null || g.dia_semana === undefined ? 5 : Number(g.dia_semana)]}`
     : `todo mês${g.dia_mes ? `, dia ${g.dia_mes}` : ""}${g.parcelas ? ` · ${g.parcelas} parcelas, de ${mesAno(g.inicio)} a ${(() => { const d = deChave(g.inicio); d.setMonth(d.getMonth() + g.parcelas - 1); return mesAno(chaveDia(d)); })()}` : ""}`;
@@ -980,7 +986,7 @@
         <div><span>Recebido em ${anoFin}</span><strong>${dinheiro(totalAno)}</strong><small>${plural(doAno.length, "entrada", "entradas")}</small></div>
         ${ehAnoAtual ? `<div><span>Recebido em ${MESES[mesHoje]}</span><strong>${dinheiro(porMes[mesHoje])}</strong><small>${mesHoje > 0 ? `${MESES[mesHoje - 1]}: ${dinheiro(porMes[mesHoje - 1])}` : "primeiro mês do ano"}</small></div>` : ""}
         <div><span>Média por mês</span><strong>${dinheiro(media)}</strong><small>${mesesMedia > 0 ? (mesesMedia === 1 ? `em ${MESES[primeiro]}` : `de ${MESES[primeiro]} a ${MESES[ultimo]}`) : "aparece com as entradas"}</small></div>
-        <div><span>Sobra prevista em ${MESES[mesHoje]}</span><strong class="${resumoAtual.sobra < 0 ? "txt-alerta" : ""}">${dinheiro(resumoAtual.sobra)}</strong><small>gastos do mês: ${dinheiro(resumoAtual.gastosMes)}</small></div>
+        <div><span>Sobra prevista em ${MESES[mesHoje]}</span><strong class="${resumoAtual.sobra < 0 ? "txt-alerta" : ""}">${dinheiro(resumoAtual.sobra)}</strong><small>gastos do mês: ${dinheiro(resumoAtual.gastosMes)}${resumoAtual.aDefinir.length ? ` + ${esc(resumoAtual.aDefinir.map((x) => x.split(" (")[0].toLowerCase()).join(", "))} a definir` : ""}</small></div>
         <div><span>Fixos por mês</span><strong>${dinheiro(fixoPorMes)}</strong><small>${ativos.length ? esc(ativos.map((f) => f.cliente).join(" e ")) : "nenhum fixo ainda"}</small></div>
         <div class="destaque"><span>A receber</span><strong>${dinheiro(totalReceber)}</strong><small>${aReceberFin.length || abertosFixos.length ? `${plural(aReceberFin.length, "campanha", "campanhas")} e ${plural(abertosFixos.length, "mês de fixo", "meses de fixo")}` : "nada pendente"}</small></div>
       </div>
@@ -1024,8 +1030,8 @@
           <div class="bloco-titulo"><h2>Contas de ${nomeMesGastos}</h2><strong class="valor-receber">${dinheiro(rg.gastosMes)}</strong></div>
           ${rg.contas.length || rg.avulsas.length ? `<ul class="receber" id="lista-contas" style="max-height:420px">${rg.contas.map((c, i) => `
             <li>
-              <div><strong>${esc(c.gasto.descricao)}</strong><span class="suave">${DIAS_CURTOS[c.data.getDay()]} ${dataBr(c.chave)}${c.parcela ? ` · parcela ${c.parcela} de ${c.gasto.parcelas}` : ""}${c.gasto.variavel && !c.pago ? " · estimativa" : ""}</span> ${etiquetaConta(c)}</div>
-              <b>${dinheiro(c.considerado)}</b>
+              <div><strong>${esc(c.gasto.descricao)}</strong><span class="suave">${DIAS_CURTOS[c.data.getDay()]} ${dataBr(c.chave)}${c.parcela ? ` · parcela ${c.parcela} de ${c.gasto.parcelas}` : ""}${c.gasto.variavel && !c.pago && !c.aDefinir ? " · estimativa" : ""}</span> ${etiquetaConta(c)}</div>
+              <b>${c.aDefinir ? `<span class="suave">a definir</span>` : dinheiro(c.considerado)}</b>
               ${c.pago > 0 ? `<span></span>` : `<button class="btn claro" data-paguei="${i}">Paguei</button>`}
             </li>`).join("")}${rg.avulsas.map((s) => `
             <li class="clicavel" data-saida="${s.id}" style="cursor:pointer">
@@ -1040,6 +1046,7 @@
             <li><span>Já entrou no mês</span><b>${dinheiro(rg.recebido)}</b></li>
             <li><span>Fixos que ainda vão entrar</span><b>${dinheiro(rg.fixosAReceber)}</b></li>
             <li><span>Gastos do mês</span><b class="neg">- ${dinheiro(rg.gastosMes)}</b></li>
+            ${rg.aDefinir.length ? `<li><span>Ainda sem valor: ${esc(rg.aDefinir.join(", "))}</span><b class="suave">a descontar</b></li>` : ""}
             <li class="total"><span>Sobra prevista</span><b class="${rg.sobra < 0 ? "neg" : "pos"}">${dinheiro(rg.sobra)}</b></li>
           </ul>
           <p class="suave" style="margin:10px 0 0">Já pago: ${dinheiro(rg.jaPago)} de ${dinheiro(rg.gastosMes)}.${totalCampanhasPend > 0 ? ` Se as campanhas pendentes pagarem, entram mais ${dinheiro(totalCampanhasPend)}.` : ""}</p>
@@ -1049,8 +1056,8 @@
         <div class="bloco-titulo"><h2>Gastos fixos</h2><button class="btn claro" id="btn-novo-gasto">${icone("mais")}Novo gasto</button></div>
         ${gastos.length ? `<ul class="receber" id="lista-gastos" style="max-height:none">${gastos.map((g) => `
           <li class="clicavel" data-gasto="${g.id}" style="cursor:pointer">
-            <div><strong>${esc(g.descricao)}</strong><span class="suave">${esc(textoGasto(g))}${g.variavel ? " · valor muda, é uma estimativa" : ""}${g.observacao ? ` · ${esc(g.observacao)}` : ""}</span></div>
-            <b>${dinheiro(g.valor)}</b>
+            <div><strong>${esc(g.descricao)}</strong><span class="suave">${esc(textoGasto(g))}${g.variavel && !aDefinirGasto(g) ? " · valor muda, é uma estimativa" : ""}${g.observacao ? ` · ${esc(g.observacao)}` : ""}</span></div>
+            <b>${aDefinirGasto(g) ? `<span class="suave">a definir</span>` : dinheiro(g.valor)}</b>
             ${g.ativo === false ? `<span class="suave">pausado</span>` : `<span></span>`}
           </li>`).join("")}</ul>` : `<p class="vazio">Cadastre aqui as contas que se repetem (toda semana ou todo mês). Elas aparecem sozinhas em "Contas do mês".</p>`}
       </div>
@@ -1156,7 +1163,7 @@
     const g = c.gasto;
     abrirFormulario({
       titulo: `Paguei: ${g.descricao}`,
-      valores: { data: c.chave <= chaveDia(hojeData()) ? c.chave : chaveDia(hojeData()), valor: Number(g.valor) || 0 },
+      valores: { data: c.chave <= chaveDia(hojeData()) ? c.chave : chaveDia(hojeData()), valor: aDefinirGasto(g) ? "" : Number(g.valor) || 0 },
       campos: [
         { nome: "data", rotulo: "Quando pagou", tipo: "date", obrigatorio: true },
         { nome: "valor", rotulo: "Quanto pagou (R$)", tipo: "number", passo: "0.01", obrigatorio: true,
@@ -1200,18 +1207,19 @@
                  : { frequencia: "mensal", inicio: chaveDia(hojeData()), ativo: true, valor: "", dia_semana: "", dia_mes: "", parcelas: "" },
       campos: [
         { nome: "descricao", rotulo: "O que é", obrigatorio: true, inteiro: true, ajuda: "Ex.: Personal, babá, parcela das fotos" },
-        { nome: "valor", rotulo: "Valor (R$)", tipo: "number", passo: "0.01", obrigatorio: true },
+        { nome: "valor", rotulo: "Valor (R$)", tipo: "number", passo: "0.01", ajuda: "Se o valor muda toda vez, deixe 0 e marque a opção lá embaixo" },
         { nome: "frequencia", rotulo: "Repete", tipo: "select", opcoes: [["mensal", "Todo mês"], ["semanal", "Toda semana"]] },
         { nome: "dia_semana", rotulo: "Se for toda semana, qual dia", tipo: "select", opcoes: [["", "Escolha"]].concat(DIAS_SEMANA.map((n, i) => [String(i), n.charAt(0).toUpperCase() + n.slice(1)])) },
         { nome: "dia_mes", rotulo: "Se for todo mês, qual dia", tipo: "number", ajuda: "De 1 a 31" },
         { nome: "inicio", rotulo: "A partir de", tipo: "date", obrigatorio: true },
         { nome: "parcelas", rotulo: "Quantas parcelas (se tiver)", tipo: "number", ajuda: "Deixe vazio se não acaba" },
         { nome: "observacao", rotulo: "Anotação", inteiro: true },
-        { nome: "variavel", rotulo: "O valor muda toda vez (o valor acima é uma estimativa)", tipo: "checkbox", inteiro: true },
+        { nome: "variavel", rotulo: "O valor muda toda vez (com valor 0, fica \"a definir\" até você lançar quanto pagou)", tipo: "checkbox", inteiro: true },
         { nome: "ativo", rotulo: "Gasto ativo (desmarque para parar)", tipo: "checkbox", inteiro: true }
       ],
       aoSalvar: async (d) => {
-        if (!(Number(d.valor) > 0)) { toast("Coloque o valor.", true); return false; }
+        d.valor = Number(d.valor) || 0;
+        if (!(d.valor > 0) && !d.variavel) { toast("Coloque o valor, ou marque que o valor muda toda vez.", true); return false; }
         const dm = Math.round(Number(d.dia_mes) || 0), pc = Math.round(Number(d.parcelas) || 0);
         d.dia_mes = dm >= 1 && dm <= 31 ? dm : null;
         d.parcelas = pc >= 1 ? pc : null;
