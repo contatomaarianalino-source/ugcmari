@@ -338,6 +338,8 @@ alter table public.fixos add column if not exists entrega text;
 -- Tarefas que se repetem: toda semana (volta na segunda) ou todo mês (volta no dia escolhido)
 alter table public.tarefas add column if not exists repete text check (repete in ('semanal', 'mensal'));
 alter table public.tarefas add column if not exists dia_mes smallint check (dia_mes between 1 and 31);
+-- Semanal com dia de entrega (0 domingo ... 3 quarta ... 6 sábado). Renova no dia seguinte.
+alter table public.tarefas add column if not exists dia_semana smallint check (dia_semana between 0 and 6);
 
 alter table public.fixos enable row level security;
 drop policy if exists "dona faz tudo" on public.fixos;
