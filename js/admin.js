@@ -952,7 +952,7 @@
             : emAberto.some(vencido) ? `<span class="etiqueta et-atraso">${plural(emAberto.filter(vencido).length, "mês atrasado", "meses atrasados")}</span>`
             : emAberto.length ? `<span class="etiqueta et-perto">${f.dia ? `vence dia ${f.dia}` : "falta o mês atual"}</span>` : `<span class="pilula p-pago">em dia</span>`;
           return `<li class="clicavel" data-fixo="${f.id}" style="cursor:pointer">
-            <div><strong>${esc(f.cliente)}</strong><span class="suave">desde ${mesAno(f.inicio)}${f.dia ? ` · vence todo dia ${f.dia}` : ""}${f.fim ? ` · até ${mesAno(f.fim)}` : ""}</span></div>
+            <div><strong>${esc(f.cliente)}</strong><span class="suave">desde ${mesAno(f.inicio)}${f.dia ? ` · vence todo dia ${f.dia}` : ""}${f.fim ? ` · até ${mesAno(f.fim)}` : ""}</span>${f.entrega ? `<span class="suave" style="display:block">Entrega: ${esc(f.entrega)}</span>` : ""}</div>
             <b>${dinheiro(f.valor)}/mês</b>
             ${situacao}
           </li>`;
@@ -1030,6 +1030,7 @@
       campos: [
         { nome: "cliente", rotulo: "Marca", obrigatorio: true, inteiro: true },
         { nome: "valor", rotulo: "Valor por mês (R$)", tipo: "number", passo: "0.01", obrigatorio: true },
+        { nome: "entrega", rotulo: "O que você entrega por mês", inteiro: true, ajuda: "Ex.: 4 vídeos e 5 stories, novo ciclo todo dia 10" },
         { nome: "dia", rotulo: "Dia do vencimento", tipo: "number", ajuda: "Opcional, de 1 a 31. Depois desse dia, o mês aparece como atrasado." },
         { nome: "inicio", rotulo: "Primeiro mês do contrato", tipo: "date", obrigatorio: true },
         { nome: "fim", rotulo: "Último mês (se já tiver data para acabar)", tipo: "date" },
@@ -1099,8 +1100,21 @@
   const GRUPOS_TAREFA = ["Esta semana", "Vídeos TikTok Shop", "Toda semana", "Depois"];
   let tarefas = [];
   const inicioSemana = () => { const d = hojeData(); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return d; };
-  /* "Toda semana" volta a ficar pendente na segunda-feira seguinte */
-  const tarefaFeita = (t) => (t.grupo === "Toda semana" ? !!(t.feito && t.feito_em && new Date(t.feito_em) >= inicioSemana()) : !!t.feito);
+  /* Tarefas que se repetem voltam a ficar pendentes sozinhas:
+     "semanal" na segunda-feira, "mensal" no dia do mês escolhido */
+  const repeticao = (t) => t.repete || (t.grupo === "Toda semana" ? "semanal" : null);
+  const inicioCiclo = (dia) => {
+    const h = hojeData();
+    const noMes = (a, m) => new Date(a, m, Math.min(dia || 1, new Date(a, m + 1, 0).getDate()));
+    const d = noMes(h.getFullYear(), h.getMonth());
+    return h >= d ? d : noMes(h.getFullYear(), h.getMonth() - 1);
+  };
+  const tarefaFeita = (t) => {
+    const rep = repeticao(t);
+    if (!rep) return !!t.feito;
+    if (!t.feito || !t.feito_em) return false;
+    return new Date(t.feito_em) >= (rep === "semanal" ? inicioSemana() : inicioCiclo(t.dia_mes));
+  };
 
   RENDER.tarefas = async function () {
     $("#aba-tarefas").innerHTML = `<p class="vazio">Carregando...</p>`;
@@ -1161,7 +1175,7 @@
       }
       const limpar = ev.target.closest("[data-limpar]");
       if (limpar) {
-        const ids = tarefas.filter((x) => x.grupo === limpar.dataset.limpar && tarefaFeita(x)).map((x) => x.id);
+        const ids = tarefas.filter((x) => x.grupo === limpar.dataset.limpar && tarefaFeita(x) && !repeticao(x)).map((x) => x.id);
         if (!ids.length || !confirm(`Apagar ${plural(ids.length, "tarefa feita", "tarefas feitas")} de "${limpar.dataset.limpar}"?`)) return;
         if (await gravar("tarefas", (q) => q.delete().in("id", ids), "Feitas apagadas")) await RENDER.tarefas();
       }
@@ -1173,10 +1187,13 @@
     const itens = tarefas.filter((t) => t.grupo === g).sort((a, b) =>
       (tarefaFeita(a) - tarefaFeita(b)) || porPrazo(a).localeCompare(porPrazo(b)) || ((a.ordem || 0) - (b.ordem || 0)) || (a.id - b.id));
     const feitas = itens.filter(tarefaFeita).length;
+    const feitasAvulsas = itens.filter((t) => tarefaFeita(t) && !repeticao(t)).length;
+    const reps = [...new Set(itens.map(repeticao))];
+    const sufixo = reps.length === 1 && reps[0] === "semanal" ? " nesta semana" : reps.length === 1 && reps[0] === "mensal" ? " neste ciclo" : "";
     return `<div class="cartao">
-      <div class="bloco-titulo"><h2>${esc(g)}</h2><span class="suave">${itens.length ? `${feitas} de ${itens.length} feitas${g === "Toda semana" ? " nesta semana" : ""}` : ""}</span></div>
+      <div class="bloco-titulo"><h2>${esc(g)}</h2><span class="suave">${itens.length ? `${feitas} de ${itens.length} feitas${sufixo}` : ""}</span></div>
       ${itens.length ? `<ul class="tarefas">${itens.map(linhaTarefa).join("")}</ul>` : `<p class="vazio">Nada aqui. Adicione uma tarefa lá em cima.</p>`}
-      ${g !== "Toda semana" && feitas ? `<button class="btn claro limpar" data-limpar="${esc(g)}">Apagar as feitas</button>` : ""}
+      ${feitasAvulsas ? `<button class="btn claro limpar" data-limpar="${esc(g)}">Apagar as feitas</button>` : ""}
     </div>`;
   }
 
@@ -1189,6 +1206,10 @@
       else if (!feita && d === 0) prazo = `<span class="etiqueta et-perto">hoje</span>`;
       else if (!feita && d <= 3) prazo = `<span class="etiqueta et-perto">em ${plural(d, "dia", "dias")}</span>`;
       else prazo = `<span class="suave">${dataBr(t.prazo)}</span>`;
+    } else if (repeticao(t) === "mensal") {
+      prazo = `<span class="suave">renova todo dia ${t.dia_mes || 1}</span>`;
+    } else if (repeticao(t) === "semanal") {
+      prazo = `<span class="suave">renova na segunda</span>`;
     }
     return `<li class="tarefa${feita ? " feito" : ""}" data-id="${t.id}">
       <label><input type="checkbox" data-check ${feita ? "checked" : ""}><span>${esc(t.texto)}</span></label>
@@ -1201,13 +1222,17 @@
   function formTarefa(t, grupos) {
     abrirFormulario({
       titulo: "Editar tarefa",
-      valores: { texto: t.texto, grupo: t.grupo, prazo: t.prazo ? String(t.prazo).slice(0, 10) : "" },
+      valores: { texto: t.texto, grupo: t.grupo, prazo: t.prazo ? String(t.prazo).slice(0, 10) : "", repete: repeticao(t) || "", dia_mes: t.dia_mes || "" },
       campos: [
         { nome: "texto", rotulo: "Tarefa", obrigatorio: true, inteiro: true },
         { nome: "grupo", rotulo: "Grupo", obrigatorio: true, lista: grupos, ajuda: "Escolha um grupo ou escreva um novo" },
-        { nome: "prazo", rotulo: "Prazo", tipo: "date" }
+        { nome: "prazo", rotulo: "Prazo", tipo: "date" },
+        { nome: "repete", rotulo: "Repete", tipo: "select", opcoes: [["", "Não repete"], ["semanal", "Toda semana (volta na segunda)"], ["mensal", "Todo mês"]] },
+        { nome: "dia_mes", rotulo: "Se for todo mês, volta no dia", tipo: "number", ajuda: "De 1 a 31" }
       ],
       aoSalvar: async (d) => {
+        const dia = Math.round(Number(d.dia_mes) || 0);
+        d.dia_mes = d.repete === "mensal" ? (dia >= 1 && dia <= 31 ? dia : 1) : null;
         const ok = await gravar("tarefas", (q) => q.update(d).eq("id", t.id), "Tarefa salva");
         if (ok) await RENDER.tarefas();
         return ok;
