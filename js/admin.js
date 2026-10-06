@@ -424,7 +424,10 @@
      ===================================================================== */
   const SITUACOES = [["lead", "Lead"], ["conversando", "Conversando"], ["cliente", "Cliente"], ["parada", "Parada"]];
   const nomeSituacao = (s) => (SITUACOES.find((x) => x[0] === s) || [s, s || ""])[1];
-  let marcas = [], buscaMarcas = "", filtroMarcas = "todas";
+  let marcas = [], buscaMarcas = "", filtroMarcas = "todas", filtroNicho = "todos";
+  const SEM_NICHO = "A definir";
+  const nichoDe = (m) => String(m.nicho || "").trim() || SEM_NICHO;
+  const nichosMarcas = () => [...new Set(marcas.map(nichoDe))].sort((a, b) => (a === SEM_NICHO) - (b === SEM_NICHO) || a.localeCompare(b, "pt-BR"));
 
   const linkInstagram = (ig) => { const h = String(ig || "").trim().replace(/^@/, "").replace(/^https?:\/\/(www\.)?instagram\.com\//i, "").replace(/\/.*$/, ""); return h ? `https://instagram.com/${encodeURIComponent(h)}` : null; };
   const linkWhats = (tel) => { let n = String(tel || "").replace(/\D/g, ""); if (!n) return null; if (n.length === 10 || n.length === 11) n = "55" + n; return `https://wa.me/${n}`; };
@@ -439,6 +442,7 @@
             <option value="todas">Todas as situações</option>
             ${SITUACOES.map(([v, t]) => `<option value="${v}" ${filtroMarcas === v ? "selected" : ""}>${t}</option>`).join("")}
           </select>
+          <select class="select" id="filtro-nicho" aria-label="Filtrar por nicho"></select>
           <span class="suave" id="conta-marcas"></span>
         </div>
         <div class="ferramentas">
@@ -452,32 +456,48 @@
       </table></div>`;
     $("#busca-marcas").addEventListener("input", (e) => { buscaMarcas = e.target.value; desenharMarcas(); });
     $("#filtro-marcas").addEventListener("change", (e) => { filtroMarcas = e.target.value; desenharMarcas(); });
+    $("#filtro-nicho").addEventListener("change", (e) => { filtroNicho = e.target.value; desenharMarcas(); });
     $("#btn-nova-marca").addEventListener("click", () => formMarca());
     $("#btn-csv-marcas").addEventListener("click", () => baixarCsv("marcas", [
-      { rotulo: "Marca", valor: (m) => m.nome }, { rotulo: "Instagram", valor: (m) => m.instagram },
+      { rotulo: "Nicho", valor: nichoDe }, { rotulo: "Marca", valor: (m) => m.nome }, { rotulo: "Instagram", valor: (m) => m.instagram },
       { rotulo: "E-mail", valor: (m) => m.email }, { rotulo: "Telefone", valor: (m) => m.telefone },
       { rotulo: "Situação", valor: (m) => nomeSituacao(m.situacao) }, { rotulo: "Observação", valor: (m) => m.obs },
       { rotulo: "Último contato", valor: (m) => dataBr(m.ultimo_contato) }, { rotulo: "Origem", valor: (m) => (m.origem === "site" ? "Formulário do site" : "Painel") }
-    ], marcasFiltradas()));
+    ], ordenarPorNicho(marcasFiltradas())));
     const r = await ler("marcas", (q) => q.order("criado_em", { ascending: false }));
     marcas = r.dados;
+    const nichos = nichosMarcas();
+    if (filtroNicho !== "todos" && !nichos.includes(filtroNicho)) filtroNicho = "todos";
+    $("#filtro-nicho").innerHTML = `<option value="todos">Todos os nichos</option>` +
+      nichos.map((n) => `<option value="${esc(n)}" ${filtroNicho === n ? "selected" : ""}>${esc(n)}</option>`).join("");
     desenharMarcas();
   };
 
   function marcasFiltradas() {
     const b = buscaMarcas.trim().toLowerCase();
     return marcas.filter((m) => (filtroMarcas === "todas" || m.situacao === filtroMarcas) &&
-      (!b || [m.nome, m.instagram, m.email].some((x) => String(x || "").toLowerCase().includes(b))));
+      (filtroNicho === "todos" || nichoDe(m) === filtroNicho) &&
+      (!b || [m.nome, m.instagram, m.email, m.nicho].some((x) => String(x || "").toLowerCase().includes(b))));
+  }
+
+  function ordenarPorNicho(lista) {
+    const ordem = nichosMarcas();
+    return [...lista].sort((a, b) => ordem.indexOf(nichoDe(a)) - ordem.indexOf(nichoDe(b)) || String(a.nome).localeCompare(String(b.nome), "pt-BR"));
   }
 
   function desenharMarcas() {
     const corpo = $("#tabela-marcas"); if (!corpo) return;
-    const lista = marcasFiltradas();
+    const lista = ordenarPorNicho(marcasFiltradas());
     $("#conta-marcas").textContent = plural(lista.length, "marca", "marcas");
     if (!lista.length) { corpo.innerHTML = `<tr><td colspan="7"><p class="vazio">${marcas.length ? "Nenhuma marca com esse filtro." : "Sua base está vazia. As marcas que mandarem mensagem pelo site entram aqui sozinhas, como Lead."}</p></td></tr>`; return; }
+    const porNicho = {};
+    lista.forEach((m) => { porNicho[nichoDe(m)] = (porNicho[nichoDe(m)] || 0) + 1; });
+    let nichoAtual = null;
     corpo.innerHTML = lista.map((m) => {
       const ig = linkInstagram(m.instagram), zap = linkWhats(m.telefone);
-      return `<tr class="clicavel" data-id="${m.id}">
+      const n = nichoDe(m), cabeca = n !== nichoAtual ? `<tr class="linha-nicho"><td colspan="7">${esc(n)} <span class="suave">${plural(porNicho[n], "marca", "marcas")}</span></td></tr>` : "";
+      nichoAtual = n;
+      return cabeca + `<tr class="clicavel" data-id="${m.id}">
         <td><strong>${esc(m.nome)}</strong>${m.exemplo ? `<span class="exemplo-tag">exemplo</span>` : ""}${m.origem === "site" ? `<br><span class="suave">veio pelo site</span>` : ""}</td>
         <td>${ig ? `<a href="${ig}" target="_blank" rel="noopener">${esc(m.instagram)}</a>` : ""}</td>
         <td>${m.email ? `<a href="mailto:${esc(m.email)}">${esc(m.email)}</a>` : ""}</td>
@@ -500,6 +520,7 @@
       valores: m || { situacao: "lead", ultimo_contato: chaveDia(new Date()) },
       campos: [
         { nome: "nome", rotulo: "Marca", obrigatorio: true, inteiro: true },
+        { nome: "nicho", rotulo: "Nicho", lista: nichosMarcas().filter((n) => n !== SEM_NICHO), ajuda: "Escolha da lista ou escreva um novo." },
         { nome: "instagram", rotulo: "Instagram", ajuda: "Ex: @marca" },
         { nome: "email", rotulo: "E-mail", tipo: "email" },
         { nome: "telefone", rotulo: "Telefone", tipo: "tel", ajuda: "Com DDD, para abrir o WhatsApp" },
