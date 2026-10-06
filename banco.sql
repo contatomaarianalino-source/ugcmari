@@ -388,6 +388,9 @@ create policy "dona faz tudo" on public.fixos
 -- NICHO DAS MARCAS: para organizar a aba Marcas por nicho e prospectar de novo.
 alter table public.marcas add column if not exists nicho text;
 
+-- FAVORITAS: marcas com estrela ficam fixas no topo da aba Marcas.
+alter table public.marcas add column if not exists favorita boolean not null default false;
+
 -- =====================================================================
 -- COMO TESTAR SE A TRANCA FUNCIONA
 -- Depois de rodar tudo acima, apague o conteúdo do editor, cole só
