@@ -733,8 +733,7 @@ const nichos = [
   { id: "casa",        nome: "Casa e decoração", nomeEn: "Home and decor" },
   { id: "cuidados",    nome: "Cuidados pessoais", nomeEn: "Personal care" },
   { id: "alimentacao", nome: "Alimentação e fitness", nomeEn: "Food and fitness" },
-  { id: "financas",    nome: "Finanças",         nomeEn: "Finance" },
-  { id: "tech",        nome: "Sites e apps",     nomeEn: "Websites and apps" }
+  { id: "tech",        nome: "Sites, apps e finanças", nomeEn: "Websites, apps and finance" }
 ];
 
 /* TRABALHOS: cada item aparece na galeria.
@@ -776,7 +775,7 @@ let trabalhos = [
   { nicho: "maternidade", titulo: "Somnii",        formato: "Vídeo UGC", formatoEn: "UGC video", youtube: "gOBBQIFHNks" },
   { nicho: "maternidade", titulo: "Onda Marinha",  formato: "Vídeo UGC", formatoEn: "UGC video", youtube: "f2vlcxUFXNA" },
   { nicho: "maternidade", titulo: "Likluc",        formato: "Vídeo UGC", formatoEn: "UGC video", youtube: "FAZqYXtGDfI" },
-  /* SITES E APPS: vídeos do YouTube */
+  /* SITES, APPS E FINANÇAS: vídeos do YouTube */
   { nicho: "tech", titulo: "English Path", formato: "Vídeo UGC", formatoEn: "UGC video", youtube: "3vo7wQcbZQk" },
   { nicho: "tech", titulo: "English Path", formato: "Vídeo UGC", formatoEn: "UGC video", youtube: "4BZ9p92UI80" },
   /* CUIDADOS PESSOAIS: vídeos do YouTube */
@@ -784,8 +783,7 @@ let trabalhos = [
   { nicho: "cuidados", titulo: "Bianco", formato: "Vídeo UGC", formatoEn: "UGC video", youtube: "i47ogR5Ql5s" },
   /* ALIMENTAÇÃO E FITNESS: vídeos do YouTube */
   { nicho: "alimentacao", titulo: "Magia de Cristal", formato: "Vídeo UGC", formatoEn: "UGC video", youtube: "XKMLYWkM3D8" },
-  /* FINANÇAS: vídeos do YouTube */
-  { nicho: "financas", titulo: "Ether.fi", formato: "Vídeo UGC", formatoEn: "UGC video", youtube: "BD9LMiAeWAc" }
+  { nicho: "tech", titulo: "Ether.fi", formato: "Vídeo UGC", formatoEn: "UGC video", youtube: "BD9LMiAeWAc" }
 ];
 
 /* SERVIÇOS: os seis cards da seção "Como eu te ajudo". */
@@ -1411,7 +1409,7 @@ $("#ano").textContent = new Date().getFullYear();
     if (!alvo) return null;
     let n = nichos.find((x) => semAcento(x.nome) === alvo || semAcento(x.nomeEn) === alvo || x.id === alvo);
     if (!n) {
-      /* Nicho novo criado no painel: entra antes de "Sites e apps" */
+      /* Nicho novo criado no painel: entra antes de "Sites, apps e finanças" */
       n = { id: alvo.replace(/[^a-z0-9]+/g, "-"), nome: String(nome).trim(), nomeEn: String(nome).trim() };
       const posTech = nichos.findIndex((x) => x.id === "tech");
       nichos.splice(posTech < 0 ? nichos.length : posTech, 0, n);
