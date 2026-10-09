@@ -216,7 +216,7 @@
   /* =====================================================================
      ABA 1. PORTFÓLIO: métricas de visita + tabela de vídeos
      ===================================================================== */
-  const NICHOS_PADRAO = ["Moda e acessórios", "Skincare", "Maternidade", "Beleza", "Casa e decoração", "Cuidados pessoais", "Alimentação e fitness", "Finanças", "Sites e apps"];
+  const NICHOS_PADRAO = ["Moda e acessórios", "Skincare", "Maternidade", "Beleza", "Casa e decoração", "Cuidados pessoais", "Alimentação e fitness", "Sites, apps e finanças"];
   const FORMATOS = ["Vídeo UGC", "Unboxing", "Corte para anúncio", "Fotos do produto", "Publicação no meu perfil"];
   let videos = [];
 
